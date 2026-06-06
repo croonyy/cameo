@@ -3,13 +3,13 @@
   <defs>
     <!-- 核心发光渐变 -->
     <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-      <stop offset="0%" stop-color="#ff00ff" stop-opacity="0.9"/>
-      <stop offset="100%" stop-color="#ff00ff" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#ff00ff" stop-opacity="0.9" />
+      <stop offset="100%" stop-color="#ff00ff" stop-opacity="0" />
     </radialGradient>
     <!-- 能量波渐变 -->
     <radialGradient id="waveGlow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-      <stop offset="0%" stop-color="#00ffff" stop-opacity="0.5"/>
-      <stop offset="60%" stop-color="#00ffff" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#00ffff" stop-opacity="0.5" />
+      <stop offset="60%" stop-color="#00ffff" stop-opacity="0" />
     </radialGradient>
     <!-- 路径发光滤镜 -->
     <filter id="pathBlur" x="-50%" y="-50%" width="200%" height="200%">
@@ -22,8 +22,8 @@
   </defs>
   <g transform="translate(40 36) scale(0.78)">
 
-  <!-- 原始路径 1：应用发光滤镜和动画 -->
-  <path d="
+    <!-- 原始路径 1：应用发光滤镜和动画 -->
+    <path d="
     M142 139 A34 34 0 0 1 108 105
     M142 139 A34 34 0 0 0 108 105
     M108 105 A55 55 0 0 1 53 160
@@ -33,12 +33,12 @@
     M142 249 A144 144 0 0 1 286 105
     M142 249 A144 144 0 0 0 286 105
     " fill="none" stroke="#00ffff" stroke-width="100" stroke-linecap="round" filter="url(#pathBlur)">
-    <!-- 动画：路径颜色闪烁 -->
-    <animate attributeName="stroke" values="#00ffff;#ff00ff;#00ffff" dur="2s" repeatCount="indefinite" />
-  </path>
+      <!-- 动画：路径颜色闪烁 -->
+      <animate attributeName="stroke" values="#00ffff;#ff00ff;#00ffff" dur="2s" repeatCount="indefinite" />
+    </path>
 
-  <!-- 原始路径 2 -->
-  <path d="
+    <!-- 原始路径 2 -->
+    <path d="
     M142 139 A34 34 0 0 1 108 105
     M142 139 A34 34 0 0 0 108 105
     M108 105 A55 55 0 0 1 53 160
@@ -49,33 +49,32 @@
     M142 249 A144 144 0 0 0 286 105
     " fill="#012772" stroke="#044fff" stroke-width="0" stroke-linecap="round" />
 
-  <!-- 中间的圆形：能量核心 -->
-  <circle cx="121" cy="160" r="20" fill="#ff00ff">
-    <!-- 动画1：核心呼吸缩放 -->
-    <animate attributeName="r" values="10;20;10" dur="2s" repeatCount="indefinite" />
-    <!-- 动画2：核心颜色脉冲 -->
-    <animate attributeName="fill" values="#ff00ff;#ffffff;#ff00ff" dur="1.5s" repeatCount="indefinite" />
-  </circle>
+    <!-- 粒子环绕效果 -->
+    <g>
+      <circle cx="125" cy="122" r="5" fill="#00ffff" />
+      <circle cx="80.5" cy="132.5" r="5" fill="#00ffff" />
+      <circle cx="97.5" cy="204.5" r="5" fill="#00ffff" />
+      <circle cx="214" cy="177" r="5" fill="#00ffff" />
+      <!-- <circle cx="121" cy="199" r="5" fill="#ff00ff" /> -->
+    </g>
 
-  <!-- 动画1：核心发光 -->
-  <circle cx="121" cy="160" r="18" fill="url(#coreGlow)">
-    <animate attributeName="r" values="18;24;18" dur="1.5s" repeatCount="indefinite" />
-  </circle>
-
-  <!-- 动画2：能量冲击波 -->
-  <circle cx="121" cy="160" r="0" fill="url(#waveGlow)" opacity="0">
-    <animate attributeName="r" values="0;170;0" dur="3s" repeatCount="indefinite" />
-    <animate attributeName="opacity" values="0;0.8;0" dur="3s" repeatCount="indefinite" />
-  </circle>
-
-  <!-- 动画3：粒子环绕效果 -->
-  <g>
-    <circle cx="121" cy="121" r="5" fill="#00ffff">
-      <animate attributeName="transform" type="rotate" from="0 121 160" to="360 121 160" dur="4s" repeatCount="indefinite" />
+    <!-- 中间的圆形：能量核心 -->
+    <circle cx="121" cy="160" r="20" fill="#ff00ff">
+      <!-- 动画1：核心呼吸缩放 -->
+      <animate attributeName="r" values="10;20;10" dur="2s" repeatCount="indefinite" />
+      <!-- 动画2：核心颜色脉冲 -->
+      <animate attributeName="fill" values="#ff00ff;#ffffff;#ff00ff" dur="1.5s" repeatCount="indefinite" />
     </circle>
-    <circle cx="121" cy="199" r="5" fill="#ff00ff">
-      <animate attributeName="transform" type="rotate" from="0 121 160" to="360 121 160" dur="5s" repeatCount="indefinite" />
+
+    <!-- 动画1：核心发光 -->
+    <circle cx="121" cy="160" r="18" fill="url(#coreGlow)">
+      <animate attributeName="r" values="18;24;18" dur="1.5s" repeatCount="indefinite" />
     </circle>
-  </g>
+
+    <!-- 动画2：能量冲击波 -->
+    <circle cx="121" cy="160" r="0" fill="url(#waveGlow)" opacity="0">
+      <animate attributeName="r" values="0;170;0" dur="3s" repeatCount="indefinite" />
+      <animate attributeName="opacity" values="0;0.8;0" dur="3s" repeatCount="indefinite" />
+    </circle>
   </g>
 </svg>

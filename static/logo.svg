@@ -20,6 +20,14 @@
         M142 249 A144 144 0 0 1 286 105
         M142 249 A144 144 0 0 0 286 105
         " fill="#012772" stroke="#044fff" stroke-width="0" stroke-linecap="round" />
+    <!-- 粒子环绕效果 -->
+    <g>
+        <circle cx="125" cy="122" r="5" fill="#00ffff" />
+        <circle cx="80.5" cy="132.5" r="5" fill="#00ffff" />
+        <circle cx="97.5" cy="204.5" r="5" fill="#00ffff" />
+        <circle cx="214" cy="177" r="5" fill="#00ffff" />
+        <!-- <circle cx="121" cy="199" r="5" fill="#ff00ff" /> -->
+    </g>
     <circle cx="121" cy="160" r="20" fill="#012772">
         <animate attributeName="r" values="10;20;10" dur="1.5s" repeatCount="indefinite" />
     </circle>
