@@ -1,0 +1,24 @@
+<svg width="340" height="340" viewBox="0 0 340 340" xmlns="http://www.w3.org/2000/svg">
+    <!-- <rect width="340" height="340" fill="#ffffff" /> -->
+    <path d="
+        M142 139 A34 34 0 0 1 108 105
+        M142 139 A34 34 0 0 0 108 105
+        M108 105 A55 55 0 0 1 53 160
+        M108 105 A55 55 0 0 0 53 160
+        M53 160 A89 89 0 0 1 142 249
+        M53 160 A89 89 0 0 0 142 249
+        M142 249 A144 144 0 0 1 286 105
+        M142 249 A144 144 0 0 0 286 105
+        " fill="none" stroke="#00ffff" stroke-width="100" stroke-linecap="round" />
+    <path d="
+        M142 139 A34 34 0 0 1 108 105
+        M142 139 A34 34 0 0 0 108 105
+        M108 105 A55 55 0 0 1 53 160
+        M108 105 A55 55 0 0 0 53 160
+        M53 160 A89 89 0 0 1 142 249
+        M53 160 A89 89 0 0 0 142 249
+        M142 249 A144 144 0 0 1 286 105
+        M142 249 A144 144 0 0 0 286 105
+        " fill="#012772" stroke="#044fff" stroke-width="0" stroke-linecap="round" />
+    <circle cx="121" cy="160" r="20" fill="#012772" />
+</svg>

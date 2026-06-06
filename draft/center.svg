@@ -1,0 +1,48 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <rect width="100" height="100" fill="#ffffff" fill-opacity="0.5"/>
+  <defs>
+    <!-- 单个叶片，之后绕中心点 50,50 每 90 度旋转复用，保证严格对称 -->
+    <!-- <path
+      id="item"
+      d="
+        M 55 15
+        A 30 30 0 0 0 25 45
+        L 35 45
+        A 20 20 0 0 1 55 25
+        Z
+      "
+    /> -->
+    <path
+      id="item"
+      d="
+        M 55 15
+        A 30 30 0 0 0 25 45
+        A 5 5 0 0 0 35 45
+        A 20 20 0 0 1 55 25
+        A 5 5 0 0 0 55 15
+        Z
+      "
+    />
+  </defs>
+  <circle cx="0" cy="0" r="1" fill="#ff0000"/>
+  <circle cx="50" cy="50" r="1" fill="#ff0000"/>
+  <use href="#item" fill="#f87749" transform="translate(0, 0), rotate(0 50 50)"/>
+
+  <use href="#item" fill="#00ff00" transform="translate(0, 0), rotate(60 50 50)"/>
+  <use href="#item" fill="#0000ff" transform="translate(0, 0), rotate(120 50 50)"/>
+  <use href="#item" fill="#ff0000" transform="translate(0, 0), rotate(180 50 50)"/>
+  <use href="#item" fill="#00ff00" transform="translate(0, 0), rotate(240 50 50)"/>
+  <use href="#item" fill="#0000ff" transform="translate(0, 0), rotate(300 50 50)"/>
+
+  <!-- <use href="#item" fill="#ff0000" transform="translate(0, 0), rotate(45 50 50)"/>
+  <use href="#item" fill="#ff0000" transform="translate(0, 0), rotate(90 50 50)"/>
+  <use href="#item" fill="#ff0000" transform="translate(0, 0), rotate(135 50 50)"/>
+  <use href="#item" fill="#ff0000" transform="translate(0, 0), rotate(180 50 50)"/>
+  <use href="#item" fill="#ff0000" transform="translate(0, 0), rotate(225 50 50)"/>
+  <use href="#item" fill="#ff0000" transform="translate(0, 0), rotate(270 50 50)"/>
+  <use href="#item" fill="#ff0000" transform="translate(0, 0), rotate(315 50 50)"/> -->
+
+  <!-- <use href="#item" fill="#16c7d9" transform="translate(0, 0), rotate(90 50 50)"/>
+  <use href="#item" fill="#ed3b8b" transform="translate(0, 0), rotate(180 50 50)"/>
+  <use href="#item" fill="#0b78c9" transform="translate(0, 0), rotate(270 50 50)"/> -->
+</svg>

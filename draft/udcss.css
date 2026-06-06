@@ -1,0 +1,115 @@
+
+:root {
+  --radius-sm: 10px !important;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --n-border-color: var(--app-primary-color)!important;
+  --common-border: 1px solid var(--n-border-color) !important;
+}
+
+
+.n-menu.n-menu--collapsed .n-menu-item-content.n-menu-item-content--selected::before {
+  inset: 0!important;
+}
+
+/* 统一合并所有圆角样式 */
+.n-tag,
+.n-card,
+.n-input,
+.n-button,
+.card,
+.n-menu-item,
+.n-color-picker,
+.n-button--info-type,
+.n-button--error-type,
+.n-button--warning-type,
+.n-button--primary-type,
+.n-button--success-type,
+.n-select .n-base-selection,
+.n-collapse .n-collapse-item,
+.table-toolbar-inner-checkbox,
+.n-base-select-option--pending,
+.n-base-select-option--selected,
+.n-pagination .n-pagination-item,
+.n-menu .n-menu-item-content::before,
+.n-base-select-option--pending:hover,
+.n-descriptions .n-descriptions-table-content,
+.n-menu-item-content.n-menu-item-content--selected,
+.n-base-select-option--selected.n-base-select-option--pending,
+.n-dropdown-menu .n-dropdown-option .n-dropdown-option-body::before,
+.n-menu.n-menu--collapsed .n-menu-item-content.n-menu-item-content--selected::before {
+  border-radius: var(--radius-sm) !important;
+}
+
+.n-message,
+.n-popover,
+.n-tooltip,
+.action-area,
+.n-page-header,
+.filter-section,
+.n-notification,
+.n-dropdown-menu,
+.floating-buttons,
+.n-base-select-menu,
+.n-tabs .n-tabs-nav,
+.toolbar-popover .n-popover__content {
+  border-radius: var(--radius-sm) !important;
+}
+
+.n-empty,
+.n-modal,
+.n-result,
+.n-data-table,
+.edit-container .edit-card,
+.create-container .create-card {
+  border-radius: var(--radius-sm) !important;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-thumb {
+  border-radius: var(--radius-sm);
+}
+
+
+/* 全局滚动条 - 强制覆盖 Naive UI */
+:root::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+}
+
+/* 滚动条轨道 */
+:root::-webkit-scrollbar-track,
+*::-webkit-scrollbar-track {
+  background: #f1f1f1 !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+/* 滚动条滑块 */
+:root::-webkit-scrollbar-thumb,
+*::-webkit-scrollbar-thumb {
+  background: var(--app-primary-color, #18a058) !important;
+  border-radius: 4px !important;
+  border: none !important;
+}
+
+/* 滚动条 hover */
+:root::-webkit-scrollbar-thumb:hover,
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--app-primary-color-hover, #36ad6a) !important;
+}
+
+/* Naive UI 组件内部滚动条强制覆盖 */
+.n-scrollbar::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+}
+
+.n-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--app-primary-color, #18a058) !important;
+  border-radius: var(--radius-sm) !important;
+}
+
+.n-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--app-primary-color-hover, #36ad6a) !important;
+}

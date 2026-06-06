@@ -1,0 +1,61 @@
+{
+  // "jupyter.outputWrapping": true,
+  // "notebook.output.wordWrap": true,
+  // "notebook.output.scrolling": false,
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter"
+    // "editor.formatOnSave": true
+  },
+  // "python.autoComplete.extraPaths": ["${workspaceFolder}"],
+  // "python.analysis.autoImportCompletions": true,
+  // "python.analysis.extraPaths": ["${workspaceFolder}"],
+  // "python.envFile": "${workspaceFolder}/.env"
+  // python.autoComplete.extraPaths → 仅影响代码补全
+  // "python.autoComplete.extraPaths": ["D:\\Users\\yuan.yang\\Desktop\\devhub"],
+  // python.analysis.extraPaths → 同时影响代码补全和运行时路径（需 VSCode 版本 ≥ 1.63.0）。
+  // "python.analysis.extraPaths": ["D:\\Users\\yuan.yang\\Desktop\\devhub"],
+  // "python.defaultInterpreterPath": "D:/ProgramData/miniconda3/envs/analysis/python.exe",
+  // "python.envFile": "${workspaceFolder}/.env",
+  // 执行powershell命令
+  // "terminal.integrated.profiles.windows": {
+  //   "PowerShell": {
+  //     "path": "pwsh.exe",
+  //     "args": [
+  //       "-NoExit",
+  //       "-Command",
+  //       "& { . '${workspaceFolder}/.env'; }"  // 加载 .env 文件
+  //     ]
+  //   }
+  // },
+  // 只用在用户配置文件中才能配置
+  // "jupyter.runStartupCommands": [
+  //   "import sys",
+  //   "if '${workspaceFolder}' not in sys.path:",
+  //   "    sys.path.insert(0, '${workspaceFolder}')"
+  // ],
+  // 设置终端启动的时候的环境变量，优先于下面的命令执行,此配置只有在单项目模式（Single Folder Mode）才有用
+  // 多根工作区（Multi-root Workspace）模式（Multi-root Workspace Mode）请在.code-workspace文件中配置
+  "terminal.integrated.env.windows": {
+    "env": "udenv",
+    "PYTHONPATH": "${env:PYTHONPATH};${workspaceFolder}"
+  },
+  "terminal.integrated.profiles.windows": {
+    "Command Prompt": {
+      "path": "cmd.exe",
+      "args": [
+        "/k", // 执行命令后保持终端打开（/k = keep）
+        "echo %env%" // 执行 CMD 脚本
+      ]
+    }
+  },
+  "notebook.output.wordWrap": true,
+  "python-envs.pythonProjects": [
+    {
+      "path": ".",
+      "envManager": "ms-python.python:conda",
+      "packageManager": "ms-python.python:conda"
+    }
+  ]
+  // 设置默认终端
+  // "terminal.integrated.defaultProfile.windows": "PowerShell"
+}

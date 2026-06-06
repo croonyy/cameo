@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "cwd": "${workspaceFolder}",  // 关键：设置工作目录为项目根目录
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"  // 关键：将根目录加入 PYTHONPATH
+            }
+        }
+    ]
+}

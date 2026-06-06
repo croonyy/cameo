@@ -1,0 +1,13 @@
+/* stylelint-disable comment-empty-line-before */
+/* 覆盖 Naive UI 的默认变量 */
+:root {
+  /* 修改主色为红色 */
+  /* --n-primary-color: #ff6b6b;  */
+
+  /* 修改文字颜色 */
+  /* --n-text-color: #2c3e50;  */
+
+  /* 修改边框颜色 */
+  /* --n-border-color: #dcdfe6;  */
+  /* --n-height: 28px !important; */
+}

@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1361px" height="750px" viewBox="0 0 1361 750" version="1.1">
+    <style>
+        /* --- 动画核心定义 --- */
+        @keyframes tech-pulse {
+            0%, 100% { opacity: 0.3; filter: drop-shadow(0 0 4px rgba(0,245,255,0.3)); }
+            50% { opacity: 0.85; filter: drop-shadow(0 0 12px rgba(0,245,255,0.8)); }
+        }
+
+        @keyframes rotate-cw {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes rotate-ccw {
+            from { transform: rotate(360deg); }
+            to { transform: rotate(0deg); }
+        }
+
+        @keyframes data-stream {
+            to { stroke-dashoffset: -40; }
+        }
+
+        @keyframes float-subtle {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-12px); }
+        }
+
+        /* --- 动效类绑定 (重置了精确的中心点，防止高画布下轴心偏移) --- */
+        .node-glow { animation: tech-pulse 3s infinite ease-in-out; }
+        .stream-fast { stroke-dasharray: 8, 4; animation: data-stream 1.5s infinite linear; }
+        .stream-slow { stroke-dasharray: 6, 4; animation: data-stream 2.5s infinite linear reverse; }
+
+        .rot-left { transform-origin: 240px 310px; animation: rotate-cw 25s infinite linear; }
+        .rot-mid-cw { transform-origin: 660px 530px; animation: rotate-cw 20s infinite linear; }
+        .rot-mid-ccw { transform-origin: 660px 530px; animation: rotate-ccw 15s infinite linear; }
+        .rot-right { transform-origin: 1100px 250px; animation: rotate-cw 30s infinite linear; }
+
+        .float-node-1 { animation: float-subtle 4s infinite ease-in-out; }
+        .float-node-2 { animation: float-subtle 4.5s infinite ease-in-out 0.5s; }
+
+        /* --- 文本样式 --- */
+        .txt-main { font-family: system-ui, -apple-system, sans-serif; font-weight: 300; fill: #ffffff; opacity: 0.9; letter-spacing: 1px; }
+        .txt-sub { font-family: system-ui, -apple-system, sans-serif; fill: #8fa0dd; opacity: 0.6; font-size: 14px; }
+        .txt-code { font-family: monospace; fill: #00ffff; font-size: 11px; opacity: 0.8; }
+    </style>
+
+    <defs>
+        <radialGradient id="space-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#0055ff" stop-opacity="0.18"/>
+            <stop offset="100%" stop-color="#0a0f1d" stop-opacity="0"/>
+        </radialGradient>
+
+        <radialGradient id="core-blue" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#00f5ff" stop-opacity="0.85"/>
+            <stop offset="60%" stop-color="#0044cc" stop-opacity="0.3"/>
+            <stop offset="100%" stop-color="#0a0f1d" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="core-pink" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ff00aa" stop-opacity="0.8"/>
+            <stop offset="100%" stop-color="#0a0f1d" stop-opacity="0"/>
+        </radialGradient>
+
+        <filter id="neon-glow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="5" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+    </defs>
+
+    <circle cx="680" cy="375" r="650" fill="url(#space-glow)"/>
+
+    <g opacity="0.25" fill="#ffffff">
+        <circle cx="150" cy="150" r="1"/> <circle cx="380" cy="100" r="1.5"/> <circle cx="520" cy="220" r="1"/>
+        <circle cx="780" cy="120" r="1"/> <circle cx="950" cy="160" r="1.5"/> <circle cx="1250" cy="90" r="1"/>
+        <circle cx="220" cy="620" r="1.5"/> <circle cx="410" cy="520" r="1"/> <circle cx="890" cy="640" r="1"/>
+        <circle cx="1120" cy="590" r="1.5"/> <circle cx="1310" cy="490" r="1"/>
+    </g>
+
+    <g fill="none" stroke-linecap="round">
+        <path d="M 240 310 Q 420 230 540 430" stroke="#0055cc" stroke-width="2" opacity="0.3"/>
+        <path d="M 240 310 Q 420 230 540 430" stroke="#00f5ff" stroke-width="1.5" class="stream-fast" filter="url(#neon-glow)"/>
+        <path d="M 240 310 Q 370 400 490 500" stroke="#00f5ff" stroke-width="1" class="stream-slow" opacity="0.6"/>
+
+        <path d="M 780 530 Q 920 610 1050 550" stroke="#ff00aa" stroke-width="1.5" class="stream-fast" filter="url(#neon-glow)"/>
+        <path d="M 750 570 Q 940 650 1110 570" stroke="#0055cc" stroke-width="1" class="stream-slow"/>
+    </g>
+
+    <g class="float-node-1">
+        <circle cx="240" cy="310" r="80" fill="url(#core-blue)"/>
+
+        <circle cx="240" cy="310" r="115" fill="none" stroke="#0055ff" stroke-width="1" opacity="0.2" stroke-dasharray="4, 8"/>
+        <path d="M 130 310 A 110 110 0 0 1 350 310" fill="none" stroke="#00f5ff" stroke-width="2.5" opacity="0.7" class="rot-left"/>
+        <path d="M 145 310 A 95 95 0 0 0 335 310" fill="none" stroke="#0044cc" stroke-width="2" opacity="0.5" stroke-dasharray="40, 30" class="rot-left"/>
+
+        <g class="rot-left" stroke="#00d5ff" stroke-width="1" fill="#00ffff">
+            <polygon points="240,220 310,275 280,365 200,355 165,265" fill="none" opacity="0.35" stroke-dasharray="3,3"/>
+            <polygon points="240,310 310,275 280,365" fill="none" opacity="0.2"/>
+            <line x1="240" y1="220" x2="240" y2="310" opacity="0.4"/>
+            <line x1="200" y1="355" x2="240" y2="310" opacity="0.4"/>
+
+            <circle cx="240" cy="220" r="4.5" class="node-glow"/>
+            <circle cx="310" cy="275" r="4.5" class="node-glow"/>
+            <circle cx="280" cy="365" r="4.5" class="node-glow"/>
+            <circle cx="200" cy="355" r="4.5" class="node-glow"/>
+            <circle cx="165" cy="265" r="4.5" class="node-glow"/>
+            <circle cx="240" cy="310" r="6" fill="#ffffff" filter="url(#neon-glow)"/>
+        </g>
+    </g>
+
+    <g class="float-node-2">
+        <g transform="translate(660, 530) rotate(-12) translate(-660, -530)">
+            <ellipse cx="660" cy="530" rx="230" ry="75" fill="none" stroke="#2a4477" stroke-width="2" opacity="0.4"/>
+            <ellipse cx="660" cy="530" rx="200" ry="60" fill="none" stroke="#00f5ff" stroke-width="3" opacity="0.7" stroke-dasharray="140, 40" class="rot-mid-cw"/>
+            <ellipse cx="660" cy="530" rx="170" ry="48" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.5" stroke-dasharray="30, 15" class="rot-mid-ccw"/>
+        </g>
+
+        <circle cx="660" cy="530" r="70" fill="url(#core-blue)" opacity="0.8"/>
+        <circle cx="660" cy="530" r="48" fill="#0d162d" stroke="#00aaff" stroke-width="1.5"/>
+
+        <g class="rot-mid-cw" stroke="#00d5ff" stroke-width="0.8" fill="none" opacity="0.5">
+            <ellipse cx="660" cy="530" rx="48" ry="16"/>
+            <ellipse cx="660" cy="530" rx="16" ry="48"/>
+        </g>
+
+        <text x="585" y="485" class="txt-code">39.11G_</text>
+        <line x1="625" y1="490" x2="642" y2="508" stroke="#00ffff" stroke-width="1" opacity="0.6"/>
+        <text x="705" y="475" class="txt-code" fill="#ff00aa">VAL_90.5</text>
+    </g>
+
+    <g class="float-node-1">
+        <g transform="translate(1100, 250) rotate(15) translate(-1100, -250)">
+            <ellipse cx="1100" cy="250" rx="105" ry="42" fill="none" stroke="#ff00aa" stroke-width="2" opacity="0.4" stroke-dasharray="90, 40" class="rot-right"/>
+            <ellipse cx="1100" cy="250" rx="85" ry="28" fill="none" stroke="#551d44" stroke-width="1.5"/>
+        </g>
+        <circle cx="1100" cy="250" r="35" fill="url(#core-pink)"/>
+        <circle cx="1100" cy="250" r="16" fill="#ff00aa" opacity="0.7" filter="url(#neon-glow)"/>
+    </g>
+
+    <g class="float-node-2" transform="translate(1010, 460)">
+        <path d="M450,130 L520,60 L630,100 L670,190 L580,240 L470,210 Z" fill="none" stroke="#0055ff" stroke-width="1.2" opacity="0.35"/>
+        <path d="M450,130 L560,140 L630,100 M520,60 L560,140 L580,240 M560,140 L470,210" fill="none" stroke="#ff00aa" stroke-width="0.8" opacity="0.25"/>
+
+        <path d="M440,140 Q500,90 560,150 T680,180" fill="none" stroke="#00f5ff" stroke-width="1" opacity="0.25" class="stream-fast"/>
+
+        <g stroke-width="1" filter="url(#neon-glow)">
+            <circle cx="450" cy="130" r="5" fill="#00ffff" class="node-glow"/>
+            <circle cx="520" cy="60" r="4.5" fill="#00ffff" class="node-glow"/>
+            <circle cx="630" cy="100" r="4" fill="#ff00aa" class="node-glow"/>
+            <circle cx="670" cy="190" r="5.5" fill="#ff00aa" class="node-glow"/>
+            <circle cx="580" cy="240" r="4" fill="#00ffff" class="node-glow"/>
+            <circle cx="470" cy="210" r="4.5" fill="#00ffff" class="node-glow"/>
+            <circle cx="560" cy="140" r="4" fill="#ffffff" class="node-glow"/>
+        </g>
+    </g>
+</svg>
