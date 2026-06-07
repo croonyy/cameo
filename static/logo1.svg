@@ -1,80 +1,74 @@
-<svg width="340" height="340" viewBox="0 0 340 340" xmlns="http://www.w3.org/2000/svg">
-  <!-- 定义多种渐变和滤镜 -->
-  <defs>
-    <!-- 核心发光渐变 -->
-    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-      <stop offset="0%" stop-color="#ff00ff" stop-opacity="0.9" />
-      <stop offset="100%" stop-color="#ff00ff" stop-opacity="0" />
-    </radialGradient>
-    <!-- 能量波渐变 -->
-    <radialGradient id="waveGlow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-      <stop offset="0%" stop-color="#00ffff" stop-opacity="0.5" />
-      <stop offset="60%" stop-color="#00ffff" stop-opacity="0" />
-    </radialGradient>
-    <!-- 路径发光滤镜 -->
-    <filter id="pathBlur" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
-      <feMerge>
-        <feMergeNode in="blur" />
-        <feMergeNode in="SourceGraphic" />
-      </feMerge>
-    </filter>
-  </defs>
-  <g transform="translate(40 36) scale(0.78)">
+<svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+    <!-- <rect width="600" height="600" fill="#ffffff" /> -->
+    <defs>
+        <!-- 核心发光渐变 -->
+        <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+            <stop offset="0%" stop-color="#00ffff" stop-opacity="0.9" />
+            <stop offset="100%" stop-color="##00ffff" stop-opacity="0" />
+        </radialGradient>
 
-    <!-- 原始路径 1：应用发光滤镜和动画 -->
-    <path d="
-    M142 139 A34 34 0 0 1 108 105
-    M142 139 A34 34 0 0 0 108 105
-    M108 105 A55 55 0 0 1 53 160
-    M108 105 A55 55 0 0 0 53 160
-    M53 160 A89 89 0 0 1 142 249
-    M53 160 A89 89 0 0 0 142 249
-    M142 249 A144 144 0 0 1 286 105
-    M142 249 A144 144 0 0 0 286 105
-    " fill="none" stroke="#00ffff" stroke-width="100" stroke-linecap="round" filter="url(#pathBlur)">
-      <!-- 动画：路径颜色闪烁 -->
-      <animate attributeName="stroke" values="#00ffff;#ff00ff;#00ffff" dur="2s" repeatCount="indefinite" />
-    </path>
+        <!-- 能量波渐变 -->
+        <radialGradient id="waveGlow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+            <stop offset="0%" stop-color="#00ffff" stop-opacity="0.5" />
+            <stop offset="60%" stop-color="#00ffff" stop-opacity="0" />
+        </radialGradient>
 
-    <!-- 原始路径 2 -->
-    <path d="
-    M142 139 A34 34 0 0 1 108 105
-    M142 139 A34 34 0 0 0 108 105
-    M108 105 A55 55 0 0 1 53 160
-    M108 105 A55 55 0 0 0 53 160
-    M53 160 A89 89 0 0 1 142 249
-    M53 160 A89 89 0 0 0 142 249
-    M142 249 A144 144 0 0 1 286 105
-    M142 249 A144 144 0 0 0 286 105
-    " fill="#012772" stroke="#044fff" stroke-width="0" stroke-linecap="round" />
+        <!-- 路径发光滤镜 -->
+        <filter id="pathBlur" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
+            <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+            </feMerge>
+        </filter>
+    </defs>   
+    <g transform="translate(15.000000000000014 15.000000000000014) scale(0.95)"> 
+        <path
+            d="M251.565 233.066 A59.867 59.867 0 0 1 191.698 173.199
+M251.565 233.066 A59.867 59.867 0 0 0 191.698 173.199
+M191.698 173.199 A96.867 96.867 0 0 1 94.831 270.066
+M191.698 173.199 A96.867 96.867 0 0 0 94.831 270.066
+M94.831 270.066 A156.735 156.735 0 0 1 251.566 426.801
+M94.831 270.066 A156.735 156.735 0 0 0 251.566 426.801
+M251.566 426.801 A253.602 253.602 0 0 1 505.168 173.199
+M251.566 426.801 A253.602 253.602 0 0 0 505.168 173.199
+"
+            fill="none" stroke="#00ffff"
+            stroke-width="185"
+            stroke-linecap="round"
+            filter="url(#pathBlur)" 
+            >
+            <animate attributeName="stroke" values="#00ffff;#ff00ff;#00ffff" dur="2s" repeatCount="indefinite" />
+        </path>
+        <path
+            d="M251.565 233.066 A59.867 59.867 0 0 1 191.698 173.199
+M251.565 233.066 A59.867 59.867 0 0 0 191.698 173.199
+M191.698 173.199 A96.867 96.867 0 0 1 94.831 270.066
+M191.698 173.199 A96.867 96.867 0 0 0 94.831 270.066
+M94.831 270.066 A156.735 156.735 0 0 1 251.566 426.801
+M94.831 270.066 A156.735 156.735 0 0 0 251.566 426.801
+M251.566 426.801 A253.602 253.602 0 0 1 505.168 173.199
+M251.566 426.801 A253.602 253.602 0 0 0 505.168 173.199
+"
+            fill="#012772" stroke="#00ffff"
+            stroke-width="0"
+            stroke-linecap="round" />
+        <g fill="#00ffff"><circle cx="221.631" cy="203.132" r="5.987" />
+<circle cx="143.264" cy="221.633" r="9.687" />
+<circle cx="173.199" cy="348.433" r="15.674" />
+<circle cx="378.367" cy="300.0" r="25.36" />
+</g>
+        <circle cx="214.5655" cy="270.066" r="20" fill="#012772">
+            <!-- 动画1：核心呼吸缩放 -->
+            <animate attributeName="r" values="18.5;37;18.5" dur="1.5s" repeatCount="indefinite" />
+            <!-- 动画2：核心颜色脉冲 -->
+            <animate attributeName="fill" values="#ff00ff;#00ffff;#ff00ff" dur="1.5s" repeatCount="indefinite" />
+        </circle>
 
-    <!-- 粒子环绕效果 -->
-    <g>
-      <circle cx="125" cy="122" r="5" fill="#00ffff" />
-      <circle cx="80.5" cy="132.5" r="5" fill="#00ffff" />
-      <circle cx="97.5" cy="204.5" r="5" fill="#00ffff" />
-      <circle cx="214" cy="177" r="5" fill="#00ffff" />
-      <!-- <circle cx="121" cy="199" r="5" fill="#ff00ff" /> -->
+        <!-- 动画1：核心发光 -->
+        <circle cx="214.5655" cy="270.066" r="300.0" fill="url(#coreGlow)">
+            <animate attributeName="r" values="18.5;37;18.5" dur="1.5s" repeatCount="indefinite" />
+        </circle>
+
     </g>
-
-    <!-- 中间的圆形：能量核心 -->
-    <circle cx="121" cy="160" r="20" fill="#ff00ff">
-      <!-- 动画1：核心呼吸缩放 -->
-      <animate attributeName="r" values="10;20;10" dur="2s" repeatCount="indefinite" />
-      <!-- 动画2：核心颜色脉冲 -->
-      <animate attributeName="fill" values="#ff00ff;#ffffff;#ff00ff" dur="1.5s" repeatCount="indefinite" />
-    </circle>
-
-    <!-- 动画1：核心发光 -->
-    <circle cx="121" cy="160" r="18" fill="url(#coreGlow)">
-      <animate attributeName="r" values="18;24;18" dur="1.5s" repeatCount="indefinite" />
-    </circle>
-
-    <!-- 动画2：能量冲击波 -->
-    <circle cx="121" cy="160" r="0" fill="url(#waveGlow)" opacity="0">
-      <animate attributeName="r" values="0;170;0" dur="3s" repeatCount="indefinite" />
-      <animate attributeName="opacity" values="0;0.8;0" dur="3s" repeatCount="indefinite" />
-    </circle>
-  </g>
 </svg>
