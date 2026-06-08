@@ -6,10 +6,10 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from apps.udadmin.utils.app_registry import mount_registered_apps
 from config.settings import BASE_DIR
 from config import settings
 from fastapi.middleware.cors import CORSMiddleware
-import importlib
 import os
 from db.sa import init_db, close_db
 
@@ -20,73 +20,6 @@ if settings.LOCATE_PRINT:
 
 # 使用模板渲染器处理根路径
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "static"))
-
-
-def _import_app(import_path: str):
-    if ":" in import_path:
-        module_path, attr_name = import_path.split(":", 1)
-    else:
-        module_path, attr_name = import_path.rsplit(".", 1)
-    module = importlib.import_module(module_path)
-    return getattr(module, attr_name)
-
-
-def _default_registered_app_name(import_path: str) -> str:
-    module_path = import_path.split(":", 1)[0]
-    parts = module_path.split(".")
-    if "apps" in parts:
-        app_index = parts.index("apps") + 1
-        if app_index < len(parts):
-            return parts[app_index]
-    if len(parts) >= 2:
-        return parts[-2]
-    return parts[0]
-
-
-def _normalize_registered_app_config(app_config):
-    if isinstance(app_config, str):
-        import_path = app_config
-        default_name = _default_registered_app_name(import_path)
-        return {
-            "app": import_path,
-            "path": f"/{default_name}",
-            "name": default_name,
-        }
-
-    if not isinstance(app_config, dict):
-        raise TypeError("REGISTERED_APPS items must be strings or dictionaries")
-
-    import_path = app_config.get("app")
-    if not import_path:
-        raise ValueError("REGISTERED_APPS dict items require an 'app' import path")
-
-    default_name = _default_registered_app_name(import_path)
-    mount_path = app_config.get("path") or app_config.get("mount_path") or f"/{default_name}"
-    if not mount_path.startswith("/"):
-        mount_path = f"/{mount_path}"
-
-    return {
-        "app": import_path,
-        "path": mount_path,
-        "name": app_config.get("name") or app_config.get("mount_name") or default_name,
-    }
-
-
-def mount_registered_apps(app: FastAPI):
-    registered_apps = getattr(settings, "REGISTERED_APPS", [])
-    for app_config in registered_apps:
-        normalized_config = _normalize_registered_app_config(app_config)
-        sub_app = _import_app(normalized_config["app"])
-        app.mount(
-            normalized_config["path"],
-            sub_app,
-            name=normalized_config["name"],
-        )
-        print(
-            "mounted app: "
-            f"{normalized_config['app']} -> {normalized_config['path']} "
-            f"(name={normalized_config['name']})"
-        )
 
 
 # 上下文管理，startup执行yield之前的代码，shutdown执行yield以下的代码

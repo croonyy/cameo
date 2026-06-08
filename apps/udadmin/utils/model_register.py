@@ -19,7 +19,8 @@ from . import doc
 from .model_tools import model_perms, get_model_info
 from db.sa import get_db
 from . import http_resp as hr
-from .i18n import localize_app_info, localize_field_info, localize_model_display, t
+from .app_registry import AppReg
+from .i18n import t
 from .. import models as md
 from config import settings
 from pydantic import create_model as pyd_create_model
@@ -392,26 +393,45 @@ class ModleRegister(metaclass=SingletonMeta):
         ):
             allow_models = await self.get_allow_models(user)
             all_models = {}
-            app_info = settings.APP_INFO
-            for k,v in self.models_info.items():
+            registered_apps = {}
+            for app_reg in getattr(settings, "REGISTERED_APPS", []):
+                registered_apps[app_reg.app_name] = app_reg
+                registered_apps[app_reg.name] = app_reg
+            for k, v in self.models_info.items():
                 if k in allow_models:
                     Meta = getattr(v["model"], "Meta", None)
-                    ud_app = getattr(Meta, "ud_app", None) or v["app"]
-                    app_display_info = localize_app_info(ud_app, app_info.get(ud_app, {}))
-                    model_menu_name, table_description = localize_model_display(
-                        v["model_name"],
-                        getattr(Meta, "menu_name", v["model_name"]),
-                        getattr(Meta, "table_description", v["model_name"]),
-                    )
+                    model_app_name = getattr(Meta, "ud_app", None) or v["app"]
+                    app_reg = registered_apps.get(model_app_name)
+                    registered_app_name = getattr(app_reg, "name", model_app_name)
+                    app_menu_name_key = f"ui.apps.{registered_app_name}.menu_name"
+                    app_description_key = f"ui.apps.{registered_app_name}.description"
+                    app_menu_name = t(app_menu_name_key)
+                    app_description = t(app_description_key)
+                    if app_menu_name == app_menu_name_key:
+                        app_menu_name = registered_app_name
+                    if app_description == app_description_key:
+                        app_description = ""
+
+                    model_menu_name_key = f"ui.models.{v['model_name']}"
+                    table_description_key = f"ui.tables.{v['model_name']}"
+                    model_menu_name = t(model_menu_name_key)
+                    table_description = t(table_description_key)
+                    if model_menu_name == model_menu_name_key:
+                        model_menu_name = getattr(Meta, "menu_name", v["model_name"])
+                    if table_description == table_description_key:
+                        table_description = getattr(Meta, "table_description", v["model_name"])
                     all_models[k] = {
                         "model_menu_name": model_menu_name,
                         "app": v["app"],
-                        "ud_app": getattr(Meta, "ud_app", v["app"]) or v["app"],
+                        "ud_app": registered_app_name,
                         "tb_name": getattr(v["model"], "__tablename__", v["model_name"]),
                         "tb_description": table_description,
                         "model_icon": getattr(Meta, "icon", None),
                         "model_name": v["model_name"],
-                        **app_display_info,
+                        "app_name": registered_app_name,
+                        "app_icon": getattr(app_reg, "app_icon", AppReg.DEFAULT_APP_ICON),
+                        "app_menu_name": app_menu_name,
+                        "app_description": app_description,
                     }
             return {"code": rc.success, "data": {"all_models": all_models}, "msg": ok_msg()}
 
@@ -442,10 +462,48 @@ class ModleRegister(metaclass=SingletonMeta):
             ui_data["custom_actions"] = ui_tools.serialize_custom_actions(
                 ui_data.get("custom_actions")
             )
-            fields_info = {
-                field_name: localize_field_info(field_name, deepcopy(field_info))
-                for field_name, field_info in allow_info["fileds_info"].items()
-            }
+            fields_info = {}
+            for field_name, field_info in allow_info["fileds_info"].items():
+                localized_field_info = deepcopy(field_info)
+                info = dict(localized_field_info.get("info") or {})
+
+                field_name_key = f"ui.fields.{field_name}"
+                field_ui_name = t(field_name_key)
+                info["ui_name"] = (
+                    field_ui_name
+                    if field_ui_name != field_name_key
+                    else info.get("ui_name") or field_name
+                )
+
+                field_type = localized_field_info.get("field_type")
+                ui_desc = info.get("ui_desc")
+                if field_type in {
+                    "ManyToManyField",
+                    "OneToOneField",
+                    "BackwardFKRelation",
+                    "ForeignKeyField",
+                }:
+                    related_model = (
+                        ui_desc.split(":", 1)[1].strip()
+                        if isinstance(ui_desc, str) and ":" in ui_desc
+                        else ""
+                    )
+                    if related_model:
+                        related_model_key = f"ui.models.{related_model}"
+                        related_model_name = t(related_model_key)
+                        if related_model_name == related_model_key:
+                            related_model_name = related_model
+
+                        relationship_desc_key = "ui.relationship_model"
+                        relationship_desc = t(relationship_desc_key, model=related_model_name)
+                        info["ui_desc"] = (
+                            relationship_desc
+                            if relationship_desc != relationship_desc_key
+                            else ui_desc
+                        )
+
+                localized_field_info["info"] = info
+                fields_info[field_name] = localized_field_info
             return {
                 "code": rc.success,
                 "data": {

@@ -1,0 +1,54 @@
+name: cameo
+
+services:
+  frontend-build:
+    image: node:22-alpine
+    working_dir: /workspace/front
+    profiles:
+      - build
+    environment:
+      PNPM_HOME: /pnpm
+      PATH: /pnpm:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    volumes:
+      - ./:/workspace
+      - frontend_node_modules:/workspace/front/node_modules
+      - frontend_pnpm_store:/pnpm/store
+    command: >
+      sh -c "corepack enable &&
+      corepack prepare pnpm@10.5.0 --activate &&
+      pnpm install --frozen-lockfile --store-dir /pnpm/store &&
+      pnpm build"
+
+  backend:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM python:3.12-slim
+
+        ENV PYTHONDONTWRITEBYTECODE=1
+        ENV PYTHONUNBUFFERED=1
+        ENV PIP_NO_CACHE_DIR=1
+
+        WORKDIR /app
+
+        RUN apt-get update \
+            && apt-get install -y --no-install-recommends gcc g++ unixodbc \
+            && rm -rf /var/lib/apt/lists/*
+
+        COPY requirements.txt .
+        RUN pip install --no-cache-dir -r requirements.txt
+
+        COPY . .
+
+        EXPOSE 3014
+        CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "3014"]
+    ports:
+      - "3014:3014"
+    volumes:
+      - ./db:/app/db
+      - ./static:/app/static
+    restart: unless-stopped
+
+volumes:
+  frontend_node_modules:
+  frontend_pnpm_store:

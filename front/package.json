@@ -1,6 +1,7 @@
 {
   "name": "naive-ui",
   "version": "2.0.0",
+  "packageManager": "pnpm@10.5.0",
   "author": {
     "name": "Ahjung",
     "email": "735878602@qq.com",

@@ -85,9 +85,11 @@
   </div>
   <div
     class="s-table"
+    :style="emptyDataStyle"
     :class="{
       's-table--fit-content': shouldFitContentTable,
       's-table--short-data': shouldUseShortDataLayout,
+      's-table--empty-data': shouldUseEmptyDataLayout,
     }"
     @mousedown.capture="handleTableMouseDown"
     @click.capture="handleTableClickCapture"
@@ -188,6 +190,7 @@
   const tableScrollPosition = ref({ top: 0, left: 0 });
   const resizedColumnWidthMap = ref<Record<string, number>>({});
   const shortDataBodyHeight = ref(0);
+  const emptyDataHeaderHeight = ref(48);
   let removeTableScrollListeners: (() => void) | null = null;
   const MAX_DATA_COLUMN_WIDTH = 300;
   const MAX_LONG_TEXT_COLUMN_WIDTH = 240;
@@ -479,7 +482,8 @@
   });
 
   const shouldFitContentTable = computed(() => {
-    return !unref(getBindValues).virtualScroll;
+    const rowCount = unref(getDataSourceRef).length;
+    return rowCount > 0 && !unref(getBindValues).virtualScroll;
   });
 
   const shouldUseShortDataLayout = computed(() => {
@@ -487,7 +491,15 @@
     return rowCount > 0 && rowCount <= SHORT_DATA_ROW_LIMIT && !shouldConstrainBodyHeight(rowCount);
   });
 
+  const shouldUseEmptyDataLayout = computed(() => {
+    return unref(getDataSourceRef).length === 0;
+  });
+
   //获取分页信息
+  const emptyDataStyle = computed(() => ({
+    '--empty-data-header-height': `${emptyDataHeaderHeight.value}px`,
+  }));
+
   const pagination = computed(() => toRaw(unref(getPaginationInfo)));
 
   function setProps(props: Partial<BasicTableProps>) {
@@ -968,6 +980,9 @@
     ) as HTMLElement | null;
     const headEl = tableEl.querySelector('.n-data-table-thead ') as HTMLElement | null;
     const headH = headEl?.offsetHeight || 0;
+    if (headH > 0) {
+      emptyDataHeaderHeight.value = headH;
+    }
     let paginationH = 2;
     let marginH = 12;
     if (!isBoolean(unref(pagination))) {
@@ -1117,6 +1132,48 @@
 
       :deep(.n-data-table-base-table) {
         flex: 0 0 auto !important;
+      }
+    }
+
+    &--empty-data {
+      --empty-data-content-height: 220px;
+      --empty-data-scrollbar-height: 18px;
+
+      flex: 0 0 auto !important;
+
+      :deep(.n-data-table) {
+        flex: 0 0 auto !important;
+      }
+
+      :deep(.n-data-table-base-table) {
+        flex: 0 0 auto !important;
+        position: relative;
+        display: flex !important;
+        flex-direction: column !important;
+      }
+
+      :deep(.n-data-table-base-table-body) {
+        flex: 0 0 var(--empty-data-content-height) !important;
+        height: var(--empty-data-content-height) !important;
+        max-height: var(--empty-data-content-height) !important;
+        min-height: var(--empty-data-content-height) !important;
+      }
+
+      :deep(.n-data-table-empty) {
+        position: absolute !important;
+        top: var(--empty-data-header-height);
+        right: 0;
+        bottom: var(--empty-data-scrollbar-height);
+        left: 0;
+        z-index: 2;
+        height: auto !important;
+        min-height: 0 !important;
+        padding: 0 12px !important;
+        pointer-events: none;
+      }
+
+      :deep(.n-data-table-wrapper) {
+        min-height: 0 !important;
       }
     }
 

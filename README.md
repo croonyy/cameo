@@ -5,365 +5,311 @@
 </p>
 
 <p align="center">
-  <strong>企业级 FastAPI 后台管理系统框架</strong>
+  <strong>基于 FastAPI、SQLAlchemy 2.0、Vue 3 和 Naive UI 的后台管理框架</strong>
 </p>
 
-<p align="center">
-  基于 FastAPI + SQLAlchemy 2.0 + Vue 3 + Naive UI 的现代化全栈管理后台解决方案（fastapi-admin\fastapi_admin）
-</p>
+## 简介
 
-## 介绍
+Cameo 是一个前后端分离的后台管理系统框架。后端使用 FastAPI 和 SQLAlchemy 2.0，前端使用 Vue 3、Vite、Naive UI 和 pnpm。项目内置 `udadmin` 管理应用，并提供 `demo` 示例应用，用于展示模型注册、自动 CRUD、权限控制、字段类型、关系字段和自定义动作。
 
-Cameo 是一个开源的企业级后台管理系统框架，包含一个fastapi-admin应用（参考 Django-Admin 设计理念），帮助开发者快速搭建专业的 Web 应用。项目采用前后端分离架构，具备以下核心特性：
+核心能力：
 
-- **自动 CRUD 生成** - 基于模型自动生成增删改查 API 和前端页面
-- **RBAC 权限管理** - 完善的基于角色的访问控制系统
-- **多数据库支持** - 支持 SQLite、MySQL、PostgreSQL、Oracle
-- **现代化技术栈** - Python 3.13 + FastAPI 0.115 + Vue 3.5 + Naive UI
-- **异步架构** - 全链路异步处理，高性能高并发
+- 自动 CRUD：注册 SQLAlchemy 模型后生成列表、详情、新增、编辑、删除等接口和页面。
+- RBAC 权限：内置用户、角色、权限类型、权限实例和操作记录。
+- 模型 UI 配置：通过 `UiInfo`、`FieldInfo` 配置列表列、筛选项、搜索项、可编辑字段和自定义动作。
+- 国际化：后端 `locales/zh.yml`、`locales/en.yml` 和前端 `front/src/i18n` 协同提供中英文显示。
+- Demo App：覆盖外键、一对一、多对多、枚举、JSON、日期、布尔、数字、文本等常见模型场景。
+- Docker Compose：支持容器内前端打包，并用 Python slim 镜像启动后端服务。
 
 ## 项目地址
 
-- [GitHub](https://github.com/croonyy/cameo)
-- [Gitee](https://gitee.com/croonyy/cameo)
-
-## 效果展示
-
-### 登录页
-
-深色科技风登录界面，默认演示账号为 `admin/admin`，适合后台管理系统的入口场景。
-
-![登录页](static/images/login.png)
-
-### 主控台
-
-登录后的主控台展示系统导航、标签页、快捷工具栏和概览面板，用于承载后台首页与运营数据入口。
-
-![主控台](static/images/dashboard.png)
-
-### 模型列表
-
-基于后端模型自动生成 CRUD 列表，支持分页、排序、批量选择、行操作、列宽调整和横向滚动。
-
-![模型列表](static/images/list.png)
-
-### 查询过滤
-
-列表页内置模型字段过滤区，能够按字段类型生成输入框、选择器、布尔筛选等查询控件。
-
-![查询过滤](static/images/filter.png)
-
-### 编辑表单
-
-编辑页根据模型字段生成表单，覆盖数字、文本、日期、枚举、JSON 等常见字段类型。
-
-![编辑表单](static/images/edit.png)
-
-### 行内编辑
-
-列表支持行内编辑模式，可在表格中直接修改枚举、布尔值等字段，减少频繁跳转表单页的操作成本。
-
-![行内编辑](static/images/inline_edit.png)
-
-### API 文档
-
-后端基于 FastAPI 自动生成 Swagger API 文档，便于调试认证、CRUD 和业务接口。
-
-![API 文档](static/images/api_docs.png)
+- GitHub: https://github.com/croonyy/cameo
+- Gitee: https://gitee.com/croonyy/cameo
 
 ## 技术栈
 
-### 后端
-- **框架**: FastAPI 0.115+
-- **ORM**: SQLAlchemy 2.0（异步模式）
-- **数据库迁移**: Alembic
-- **数据库**: SQLite（默认）、MySQL、PostgreSQL、Oracle
-- **认证**: JWT + 自定义 RBAC
-- **Python**: 3.13.0
+后端：
 
-### 前端
-- **框架**: Vue 3.5+
-- **UI 库**: Naive UI
-- **状态管理**: Pinia
-- **构建工具**: Vite
-- **HTTP 客户端**: Alova
-- **Node**: 22.14.0
-- **包管理器**: pnpm
+- FastAPI
+- SQLAlchemy 2.0 async
+- Alembic
+- SQLite 默认数据库，可按 `DATABASE_URL` 切换 MySQL 或 PostgreSQL
+- JWT 认证
+- 数据库认证和 LDAP 认证后端
 
-## 快速开始
+前端：
+
+- Vue 3
+- Vite
+- Naive UI
+- Pinia
+- Alova
+- pnpm 10.5.0
+- Node.js 22
+
+## 应用结构
+
+当前主应用在 `main.py` 中挂载子应用：
+
+- `/udadmin`：后台管理应用，包含用户、角色、权限、配置、操作记录等管理模型。
+- `/demo`：示例应用，展示自动 CRUD 和复杂字段/关系。
+- `/static`：静态资源目录，前端生产构建产物位于 `static/admin`。
+- `/admin`：后台前端入口，生产构建后由后端直接返回 `static/admin/index.html`。
+
+`config/settings.py` 中的 `REGISTERED_APPS` 控制挂载应用：
+
+```python
+from apps.udadmin.utils.app_registry import AppReg
+
+REGISTERED_APPS = [
+    AppReg("apps.udadmin.app:app", app_icon="antd:UserOutlined"),
+    AppReg(app_path="apps.demo.app:app"),
+]
+```
+
+`AppReg` 支持四个参数：
+
+- `app_path`：FastAPI app 导入路径，必填，例如 `AppReg("apps.udadmin.app:app")` 或 `AppReg(app_path="apps.demo.app:app")`。
+- `router_prefix`：挂载路径，默认 `/<app 目录名>`，例如 `/udadmin`、`/demo`。
+- `name`：注册名称，默认 app 目录名。
+- `app_icon`：前端应用图标，默认 `antd:AppstoreOutlined`。
+
+## Demo App
+
+`apps/demo` 提供三个示例模型：
+
+- `ForeignKeyModel`：外键目标模型，用于测试一对多关系。
+- `RelationModel`：关系模型，用于测试一对一和多对多关系。
+- `DetailModel`：明细模型，覆盖 BigInteger、LargeBinary、Boolean、Enum、String、Date、DateTime、Numeric、Float、Integer、JSON、Text、Time、ForeignKey、relationship 等字段。
+
+`apps/demo/ui.py` 展示了模型 UI 配置：
+
+- `list_display=["*"]` 显示全部字段。
+- `list_filter` 配置筛选字段。
+- `search_fields` 配置搜索字段。
+- `editable_fields` 配置行内编辑字段。
+- `custom_actions` 配置行级和工具栏自定义动作。
+
+`apps/demo/routers/actions.py` 提供自定义动作接口，并通过 `permission_required` 绑定权限，例如：
+
+- `/demo/actions/detail/preview_row`
+- `/demo/actions/detail/preview_record`
+- `/demo/actions/detail/show_context`
+- `/demo/actions/detail/show_records`
+
+## 本地开发
 
 ### 环境要求
 
-- Python 3.13.0+
-- Node.js 22.14.0+
-- pnpm
+- Python 3.12+
+- Node.js 22+
+- pnpm 10.5.0
 
-### 安装
+### 初始化
 
 ```bash
-# 克隆项目
-git clone https://gitee.com/croonyy/cameo.git
-# 或者
-git clone https://github.com/croonyy/cameo.git
-cd cameo
-
-# 安装 Python 依赖
 pip install -r requirements.txt
-
-# 初始化数据库
-alembic upgrade head
-
-# 创建初始数据（管理员账号：admin/admin）
+python -m alembic upgrade head
 python init_data.py
-
-# 安装前端依赖
-cd front
-pnpm install
 ```
 
-### 运行
+`init_data.py` 会重建默认 SQLite 数据库并写入测试数据，包括用户、角色、权限、配置、操作记录和 demo 数据。
+
+常用账号：
+
+- `admin` / `admin`
+- `test_user` / `123456`
+- `demo_user` / `123456`
+- `empty_user` / `123456`
+
+### 启动后端
 
 ```bash
-# 启动后端服务（端口 3014）
 python run.py
+```
 
-# 启动前端服务（端口 1992）
+本地开发脚本默认监听：
+
+```text
+http://localhost:3014
+```
+
+### 启动前端开发服务
+
+```bash
 cd front
+corepack enable
+corepack prepare pnpm@10.5.0 --activate
+pnpm install
 pnpm run dev
 ```
 
-### 访问
+前端开发服务端口以 Vite 配置为准。生产构建时前端会输出到 `static/admin`。
 
-- 后端 API 文档: http://localhost:3014/udadmin/docs
-- 前端页面: http://localhost:1992/
-- 默认账号: `admin` / `admin`
-- 测试账号: `test_user` / `123456`
+## Docker Compose
 
-## 项目结构
+项目根目录提供 `docker-compose.yml`，包含两个服务：
 
+- `frontend-build`：使用 `node:22-alpine` 安装依赖并执行前端打包。
+- `backend`：使用 `python:3.12-slim` 构建并运行后端，暴露 `3014` 端口。
+
+### 前端打包
+
+```bash
+docker compose run --rm frontend-build
 ```
+
+说明：
+
+- `--rm` 会在打包结束后删除前端构建容器。
+- 前端产物保留在宿主机 `static/admin`。
+- `node_modules` 和 pnpm store 使用 Docker volume 缓存，不写入宿主机源码目录。
+
+### 启动后端
+
+```bash
+docker compose up -d --build backend
+```
+
+启动后访问：
+
+```text
+http://localhost:3014
+http://localhost:3014/admin
+http://localhost:3014/docs
+http://localhost:3014/udadmin/docs
+http://localhost:3014/demo/docs
+```
+
+日常启动已构建过的后端镜像时可以使用：
+
+```bash
+docker compose up -d backend
+```
+
+代码或依赖变更后再重新构建：
+
+```bash
+docker compose up -d --build backend
+```
+
+### 完整容器流程
+
+```bash
+docker compose run --rm frontend-build
+docker compose up -d --build backend
+```
+
+如果需要查看日志：
+
+```bash
+docker compose logs -f backend
+```
+
+如果需要停止服务：
+
+```bash
+docker compose down
+```
+
+## 目录结构
+
+```text
 cameo/
-├── apps/                    # 应用目录
-│   ├── udadmin/            # Admin 管理应用
-│   │   ├── models.py       # SQLAlchemy 模型定义
-│   │   ├── ui.py           # 前端 UI 配置
-│   │   ├── app.py          # FastAPI 应用实例
-│   │   ├── routes/         # 路由定义
-│   │   └── utils/          # 工具函数
-│   └── demo/               # 示例应用
-├── front/                  # 前端根目录
-│   ├── src/
-│   │   ├── api/           # API 客户端
-│   │   ├── views/         # 页面组件
-│   │   ├── router/        # 路由配置
-│   │   └── store/         # 状态管理
-│   ├── dist/              # 构建输出（生产环境）
-│   └── package.json
-├── config/
-│   └── settings.py        # 项目配置文件
-├── db/
-│   └── db.sqlite3         # SQLite 数据库文件
-├── alembic/               # 数据库迁移文件
-│   └── versions/
-├── static/
-│   ├── dist/              # 前端构建产物（生产环境）
-│   └── images/            # 静态图片资源
-├── main.py                # 主应用入口
-├── run.py                 # 启动脚本
-├── init_data.py           # 数据初始化脚本
-├── requirements.txt       # Python 依赖
-└── pyproject.toml         # 项目配置
+├─ apps/
+│  ├─ udadmin/              # 后台管理应用
+│  │  ├─ models.py          # 用户、角色、权限、配置等模型
+│  │  ├─ ui.py              # 管理应用 UI 配置
+│  │  ├─ app.py             # udadmin FastAPI 子应用
+│  │  ├─ routers/           # 路由
+│  │  └─ utils/             # 认证、权限、国际化、模型注册等工具
+│  └─ demo/                 # 示例应用
+│     ├─ models.py          # 示例模型
+│     ├─ ui.py              # 示例模型 UI 配置
+│     ├─ app.py             # demo FastAPI 子应用
+│     └─ routers/actions.py # 自定义动作接口
+├─ config/
+│  ├─ settings.py           # 默认配置
+│  └─ local_settings.py     # 本地覆盖配置，可选
+├─ db/
+│  └─ db.sqlite3            # 默认 SQLite 数据库
+├─ front/                   # Vue 前端工程
+├─ locales/                 # 后端国际化资源
+├─ static/
+│  └─ admin/                # 前端生产构建产物
+├─ main.py                  # 主 FastAPI 应用
+├─ run.py                   # 本地开发启动脚本
+├─ init_data.py             # 初始化测试数据
+├─ requirements.txt         # Python 依赖
+└─ docker-compose.yml       # 容器编排配置
 ```
 
-## 核心功能
+## 模型注册
 
-### 1. 模型注册系统
+模型通过 `apps.udadmin.utils.model_register.mr` 注册到子应用，注册后会生成对应 CRUD API 和前端所需元数据。
 
-基于 `ModelRegister` 单例类实现自动 CRUD 生成：
+示例：
 
 ```python
 from apps.udadmin.utils.model_register import mr
-from apps.udadmin import models as md
-from apps.udadmin import ui
+from apps.demo import models as md
+from apps.demo import ui
 
-# 注册模型（自动生成 CRUD API）
-mr.register(app, md.User, ui_info=ui.UserUi)
+mr.register(app, md.DetailModel, ui_info=ui.DetailModelUi)
 ```
 
-### 2. RBAC 权限系统
-
-四层权限架构：
-- **PermissionType**: 权限类型（增删改查、自定义）
-- **Permission**: 权限实例，绑定到具体模型操作
-- **Role**: 角色定义，聚合多个权限
-- **User**: 用户，直接拥有权限或通过角色继承
-
-### 3. 自定义列配置
-
-使用 SQLAlchemy 原生 `Column` 的 `info` 参数配置前端显示信息：
+`UiInfo` 常用配置：
 
 ```python
-from sqlalchemy import Column, String
-
-class MyModel(Base):
-    __tablename__ = "mymodel"
-    name = Column(String(255), comment="名称", info={"ui_name": "显示名称", "ui_order": 1})
-```
-
-## 开发指南
-
-### 创建新应用
-
-1. **创建应用目录**
-
-```bash
-mkdir apps/myapp
-```
-
-2. **定义模型** (`apps/myapp/models.py`)
-
-```python
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.orm import DeclarativeBase
-
-class Base(DeclarativeBase):
-    pass
-
-class MyModel(Base):
-    __tablename__ = "mymodel"
-    app_name = "myapp"
-    
-    id = Column(Integer, primary_key=True, comment="主键ID", info={"ui_name": "序号"})
-    name = Column(String(255), comment="名称", info={"ui_name": "显示名称"})
-```
-
-3. **配置 UI** (`apps/myapp/ui.py`)
-
-```python
-from apps.udadmin.utils.ui_tools import UiInfo
-from . import models as md
-
-MyModelUi = UiInfo(
-    model=md.MyModel,
-    list_display=["id", "name"],
-    list_filter=["id", "name"],
-    search_fields=["name"],
+DetailModelUi = UiInfo(
+    model=md.DetailModel,
+    list_display=["*"],
+    list_filter=["id", "boolean_field", "char_enum_field"],
+    search_fields=["char_field", "text_field", "uuid_field"],
+    editable_fields=["char_field", "boolean_field", "json_field"],
 )
 ```
 
-4. **注册应用** (`main.py`)
+## 数据库迁移
 
-```python
-import apps.myapp.models
-registry.register_app("myapp", apps.myapp.models)
-from apps.myapp.app import app as myapp_app
-app.mount("/myapp", myapp_app, name="myapp")
-```
-
-### 数据库迁移
+生成迁移：
 
 ```bash
-# 生成迁移文件
-alembic revision --autogenerate -m "描述"
-
-# 应用迁移
-alembic upgrade head
-
-# 回滚
-alembic downgrade -1
+python -m alembic revision --autogenerate -m "change description"
 ```
 
-## 生产部署
-
-### 前端构建
+执行迁移：
 
 ```bash
-cd front
-pnpm run build
+python -m alembic upgrade head
 ```
 
-构建产物在 `front/dist/`，需复制到 `static/dist/` 并修改 API 地址配置。
+回滚一版：
 
-### 后端部署
-
-修改 `run.py` 中的启动参数：
-
-```python
-uvicorn.run("main:app", host="0.0.0.0", port=3014, reload=False, workers=4)
+```bash
+python -m alembic downgrade -1
 ```
 
-### Nginx 配置示例
+## 配置说明
 
-```nginx
-server {
-    listen 80;
-    server_name yourdomain.com;
+常用配置位于 `config/settings.py`：
 
-    # 静态文件
-    location /static/ {
-        alias /path/to/static/dist/;
-        expires 7d;
-    }
+- `DATABASE_URL`：数据库连接地址。
+- `REGISTERED_APPS`：子应用挂载配置。
+- `AUTHENTICATION_BACKENDS`：认证后端。
+- `LDAP_CONFIG`：LDAP 参数。
+- `SYNC_REGISTERED_MODEL_PERMISSIONS`：启动时同步已注册模型权限。
+- `SECRET_KEY`、`ACCESS_TOKEN_EXPIRE_SECONDS`、`REFRESH_TOKEN_EXPIRE_SECONDS`：JWT 配置。
 
-    # 前端路由
-    location /admin/ {
-        alias /path/to/static/dist/;
-        try_files $uri $uri/ /index.html;
-    }
+本地私有配置可写入 `config/local_settings.py` 覆盖默认值。
 
-    # 后端 API
-    location / {
-        proxy_pass http://127.0.0.1:3014;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
-```
+## 访问入口
 
-## 常见问题
+- 后台页面：`http://localhost:3014/admin`
+- 主应用文档：`http://localhost:3014/docs`
+- 管理应用文档：`http://localhost:3014/udadmin/docs`
+- Demo 应用文档：`http://localhost:3014/demo/docs`
 
-### Q: 如何修改数据库类型？
+## License
 
-修改 `config/settings.py` 中的 `DATABASE_URL` 环境变量，支持 MySQL、PostgreSQL、Oracle。
-
-### Q: 前端如何调用 API？
-
-使用 `front/src/api/` 中定义的 Alova 客户端，自动处理认证和错误。
-
-### Q: 如何添加自定义 API？
-
-在应用的 `routes/` 目录下创建路由文件，在 `app.py` 中 `include_router`。
-
-### Q: 权限不生效？
-
-检查：1) 权限实例是否存在 2) 用户/角色是否已赋权 3) 权限装饰器格式是否正确
-
-## 更新日志
-
-- **2026-05** - 优化前端显示和各种组件逻辑调整
-- **2026-05** - 完成 Tortoise-ORM 到 SQLAlchemy 2.0 迁移(tortoise-orm:c0b69f38)
-- **2026-04** - 重构权限系统，优化模型注册机制
-- **2026-02** - 前端迁移至 Vue 3 + Naive UI
-
-## 贡献指南
-
-1. Fork 项目
-2. 创建功能分支 (`git checkout -b feat/xxx`)
-3. 提交更改 (`git commit -m 'Add xxx'`)
-4. 推送分支 (`git push origin feat/xxx`)
-5. 创建 Pull Request
-
-## 许可证
-
-[LICENSE](LICENSE)
-
-## 联系方式
-
-- 问题反馈: [GitHub Issues](https://github.com/croonyy/cameo/issues)
-- 邮箱: 799671622@qq.com
-
----
-
-<p align="center">
-  <strong>如果这个项目对你有帮助，请给一个 ⭐️ Star 支持一下</strong>
-</p>
+见 [LICENSE](LICENSE)。

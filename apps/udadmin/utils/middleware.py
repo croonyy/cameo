@@ -79,11 +79,12 @@ async def CommonExceptionHandler(request: Request, call_next):
             if e.args and isinstance(e.args[0], dict) and "msg" in e.args[0].keys()
             else str(e) or t("error.internal_server_error", request=request)
         )
-        extra = (
+        raw_extra = (
             e.args[0].get("extra")
-            if e.args and isinstance(e.args[0], dict) and "data" in e.args[0].keys()
-            else {}
+            if e.args and isinstance(e.args[0], dict) and "extra" in e.args[0].keys()
+            else None
         )
+        extra = raw_extra.copy() if isinstance(raw_extra, dict) else {}
         extra["error"] = {
             "__class__": str(e.__class__),
             "__qualname__": str(e.__class__.__qualname__),

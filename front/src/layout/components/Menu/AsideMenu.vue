@@ -8,6 +8,7 @@
     :collapsed-width="40"
     :collapsed-icon-size="20"
     :indent="24"
+    :render-label="renderMenuLabel"
     :expanded-keys="openKeys"
     :value="getSelectedKeys"
     @update:value="clickMenuItem"
@@ -27,7 +28,10 @@
     unref,
     toRaw,
     onBeforeMount,
+    h,
+    nextTick,
   } from 'vue';
+  import { NTooltip } from 'naive-ui';
   import { useRoute, useRouter } from 'vue-router';
   import { useAsyncRouteStore } from '@/store/modules/asyncRoute';
   import { generatorMenu, generatorMenuMix } from '@/utils';
@@ -52,6 +56,49 @@
 
   const CRUD_ROUTE_TYPES = [UD_MENU, CRUD_LIST, CRUD_EDIT, CRUD_CREATE];
   const HTTP_URL_PATTERN = /http(s)?:/;
+
+  const MenuLabel = defineComponent({
+    name: 'MenuLabel',
+    props: {
+      label: {
+        type: String,
+        required: true,
+      },
+    },
+    setup(labelProps) {
+      const labelRef = ref<HTMLElement | null>(null);
+      const isOverflow = ref(false);
+
+      async function checkOverflow() {
+        await nextTick();
+        const el = labelRef.value;
+        isOverflow.value = !!el && el.scrollWidth > el.clientWidth;
+      }
+
+      return () =>
+        h(
+          NTooltip,
+          {
+            trigger: 'hover',
+            placement: 'right',
+            disabled: !isOverflow.value,
+          },
+          {
+            trigger: () =>
+              h(
+                'span',
+                {
+                  ref: labelRef,
+                  class: 'aside-menu-label',
+                  onMouseenter: checkOverflow,
+                },
+                labelProps.label
+              ),
+            default: () => labelProps.label,
+          }
+        );
+    },
+  });
 
   export default defineComponent({
     name: 'AppMenu',
@@ -142,6 +189,12 @@
 
       function getCrudMenuKey(appName, modelName) {
         return `crud_list_${appName}_${modelName}`;
+      }
+
+      function renderMenuLabel(option: any) {
+        const label = String(option.title || option.label || option.name || option.key || '');
+        if (!label) return label;
+        return h(MenuLabel, { label });
       }
 
       function updateSelectedKeys() {
@@ -289,6 +342,7 @@
         getSelectedKeys,
         clickMenuItem,
         menuExpanded,
+        renderMenuLabel,
       };
     },
   });
@@ -313,6 +367,19 @@
   .aside-menu.n-menu .n-menu-item-content::before {
     transition: inset 0.18s ease, top 0.18s ease, left 0.18s ease, width 0.18s ease,
       height 0.18s ease, transform 0.18s ease, background-color 0.18s ease, opacity 0.18s ease !important;
+  }
+
+  .aside-menu.n-menu .n-menu-item-content-header {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .aside-menu-label {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .aside-menu.n-menu,

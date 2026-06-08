@@ -223,6 +223,10 @@
       inverted: {
         type: Boolean,
       },
+      siderWidth: {
+        type: Number,
+        default: undefined,
+      },
     },
     emits: ['update:collapsed'],
     setup(props, { emit }) {
@@ -273,7 +277,8 @@
 
       const getChangeStyle = computed(() => {
         const { collapsed } = props;
-        const { minMenuWidth, menuWidth } = unref(menuSetting);
+        const { minMenuWidth } = unref(menuSetting);
+        const menuWidth = props.siderWidth || unref(menuSetting).menuWidth;
         return {
           left: collapsed ? `${minMenuWidth}px` : `${menuWidth}px`,
           width: `calc(100% - ${collapsed ? `${minMenuWidth}px` : `${menuWidth}px`})`,
@@ -855,7 +860,7 @@
   }
 
   .layout-header-dark {
-    background: #001529;
+    background: v-bind(getBaseColor);
     color: rgba(255, 255, 255, 0.86);
 
     .n-icon {

@@ -19,6 +19,12 @@
     >
       <Logo :collapsed="collapsed" />
       <AsideMenu v-model:collapsed="collapsed" v-model:location="getMenuLocation" />
+      <div
+        v-if="!collapsed"
+        class="layout-sider-resizer"
+        title="拖拽调整菜单宽度"
+        @mousedown.prevent="startResizeMenu"
+      />
     </n-layout-sider>
 
     <!-- 移动端的抽屉式菜单栏 -->
@@ -43,7 +49,11 @@
 
     <div class="layout-right-wrapper">
       <div class="layout-right-header">
-        <PageHeader v-model:collapsed="collapsed" :inverted="headerInverted" />
+        <PageHeader
+          v-model:collapsed="collapsed"
+          :inverted="headerInverted"
+          :sider-width="leftMenuWidth"
+        />
       </div>
 
       <TabsView v-if="isMultiTabs && fixedMulti" v-model:collapsed="collapsed" />
@@ -345,6 +355,22 @@
   }
 
   const { mobileWidth, menuWidth } = unref(menuSetting);
+  const MENU_WIDTH_KEY = 'menu_width';
+  const MIN_RESIZABLE_MENU_WIDTH = 160;
+  const MAX_RESIZABLE_MENU_WIDTH = 360;
+  const getStoredMenuWidth = () => {
+    try {
+      const stored = Number(localStorage.getItem(MENU_WIDTH_KEY));
+      if (!Number.isFinite(stored)) return menuWidth;
+      return Math.min(
+        MAX_RESIZABLE_MENU_WIDTH,
+        Math.max(MIN_RESIZABLE_MENU_WIDTH, stored)
+      );
+    } catch {
+      return menuWidth;
+    }
+  };
+  const resizedMenuWidth = ref<number>(getStoredMenuWidth());
 
   const isMobile = computed<boolean>({
     get: () => settingStore.getIsMobile,
@@ -390,9 +416,34 @@
   const contentInverted = computed(() => false);
 
   const leftMenuWidth = computed(() => {
-    const { minMenuWidth, menuWidth } = unref(menuSetting);
-    return collapsed.value ? minMenuWidth : menuWidth;
+    const { minMenuWidth } = unref(menuSetting);
+    return collapsed.value ? minMenuWidth : resizedMenuWidth.value;
   });
+
+  function startResizeMenu(event: MouseEvent) {
+    if (isMobile.value || collapsed.value) return;
+    const startX = event.clientX;
+    const startWidth = resizedMenuWidth.value;
+    document.body.classList.add('layout-sider-resizing');
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const nextWidth = startWidth + moveEvent.clientX - startX;
+      resizedMenuWidth.value = Math.min(
+        MAX_RESIZABLE_MENU_WIDTH,
+        Math.max(MIN_RESIZABLE_MENU_WIDTH, nextWidth)
+      );
+    };
+
+    const handleMouseUp = () => {
+      document.body.classList.remove('layout-sider-resizing');
+      localStorage.setItem(MENU_WIDTH_KEY, String(resizedMenuWidth.value));
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  }
 
   const getMenuLocation = computed(() => {
     return 'left';
@@ -498,6 +549,7 @@
     document.removeEventListener('scroll', handleLayoutScroll, true);
     window.removeEventListener('tabs-card:closed', handleClosedTabs);
     window.removeEventListener('resize', watchWidth);
+    document.body.classList.remove('layout-sider-resizing');
   });
 
   onBeforeMount(async () => {
@@ -530,6 +582,11 @@
 
   .n-layout-sider .n-layout-toggle-bar {
     right: -20px !important;
+  }
+
+  body.layout-sider-resizing {
+    cursor: col-resize !important;
+    user-select: none;
   }
 
   // header的高度自定义，然后后面的页面内容要跟着header的高度走
@@ -566,6 +623,26 @@
       position: relative;
       z-index: 13;
       transition: all 0.2s ease-in-out;
+    }
+
+    .layout-sider-resizer {
+      position: absolute;
+      top: 0;
+      right: -3px;
+      bottom: 0;
+      z-index: 20;
+      width: 6px;
+      cursor: col-resize;
+      background: transparent;
+      transition: background-color 0.16s ease;
+
+      &:hover {
+        background-color: color-mix(
+          in srgb,
+          var(--app-primary-color, #18a058) 35%,
+          transparent
+        );
+      }
     }
 
     .layout-sider-fix {

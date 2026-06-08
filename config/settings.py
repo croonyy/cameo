@@ -1,6 +1,8 @@
 from starlette.templating import Jinja2Templates
 import os
 
+from apps.udadmin.utils.app_registry import AppReg
+
 BASE_DIR: str = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
 DEBUG = True
@@ -29,37 +31,15 @@ SQL_LOG = False
 SYNC_REGISTERED_MODEL_PERMISSIONS = True
 
 # Mounted FastAPI sub-applications.
-# String entries use defaults:
-#   "apps.demo.app:app" -> path "/demo", name "demo"
-# Dict entries can customize path/name:
-#   {"app": "apps.demo.app:app", "path": "/custom-demo", "name": "custom_demo"}
+# app_path is required, for example AppReg("apps.udadmin.app:app")
+# or AppReg(app_path="apps.demo.app:app").
+# router_prefix defaults to "/<app directory name>".
+# name defaults to the app directory name.
+# app_icon defaults to "antd:AppstoreOutlined".
 REGISTERED_APPS = [
-    {"app": "apps.udadmin.app:app", "path": "/udadmin", "name": "admin"},
-    {"app": "apps.demo.app:app", "path": "/demo", "name": "demo"},
+    AppReg("apps.udadmin.app:app", app_icon="antd:UserOutlined"),
+    AppReg(app_path="apps.demo.app:app", router_prefix="demo", name="demo"),
 ]
-
-
-# app的前端显示配置
-APP_INFO = {
-    "udadmin": {
-        "app_name": "udadmin",
-        "app_menu_name": "授权与认证",
-        "app_description": "授权与认证,用户管理,角色管理,权限管理",
-        "app_icon": "antd:UserOutlined",
-    },
-    "demo": {
-        "app_name": "demo",
-        "app_menu_name": "应用demo",
-        "app_description": "应用demo,测试描述",
-        "app_icon": "antd:AppstoreOutlined",
-    },
-    "app2": {
-        "app_name": "app2",
-        "app_menu_name": "应用2",
-        "app_description": "应用2,测试描述",
-        "app_icon": "antd:BlockOutlined",
-    },
-}
 
 AUTHENTICATION_BACKENDS = [
     "apps.udadmin.utils.auth.DatabaseAuthenticationBackend",

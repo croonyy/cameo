@@ -210,6 +210,7 @@
   const g_filters = ref<any[]>([]);
   const g_sorter = ref<any>(null);
   const tableData = ref<any[]>([]);
+  const notifyNoDataAfterSearch = ref(false);
 
   type ListScrollType = 'table-y' | 'table-x' | 'list';
 
@@ -795,10 +796,10 @@
       cols: '1 s:2 m:3 l:3 xl:4 2xl:4',
       xGap: 16,
       yGap: 10,
-      collapsedRows: 2,
+      collapsedRows: 1,
     },
     size: 'small',
-    collapsedRows: 2,
+    collapsedRows: 1,
     labelWidth: 'auto',
     labelPlacement: 'top',
     // @ts-ignore
@@ -811,6 +812,7 @@
     console.log('@@@getSearchFormValues', getFieldsValue());
     const filters = GenerateFilter(values, modelInfo);
     g_filters.value = filters;
+    notifyNoDataAfterSearch.value = true;
     currentPage.value = 1;
     actionRef.value?.setPagination({
       page: currentPage.value,
@@ -822,6 +824,7 @@
   // 表单重置
   function handleReset() {
     g_filters.value = [];
+    notifyNoDataAfterSearch.value = false;
     currentPage.value = 1;
     actionRef.value?.setPagination({
       page: currentPage.value,
@@ -863,6 +866,12 @@
       pageCount: extra.paginator.page_cnt,
       pageSize: extra.paginator.page_size,
     };
+    if (notifyNoDataAfterSearch.value) {
+      notifyNoDataAfterSearch.value = false;
+      if (result.itemCount === 0) {
+        message.warning(t('common.noData'));
+      }
+    }
     return result;
   };
 
@@ -1959,12 +1968,15 @@
   .condition-card {
     margin-bottom: 10px;
     flex-shrink: 0;
-    border: 1px solid rgba(224, 230, 235, 0.9);
+    border: 1px solid var(--n-border-color);
     border-radius: 8px;
-    background: #fff;
+    background: var(--n-color);
+    overflow: hidden;
 
     :deep(.n-card__content) {
       padding: 12px 16px 14px;
+      background: var(--n-color);
+      border-radius: 8px;
     }
 
     // Hide validation feedback area in search/filter forms

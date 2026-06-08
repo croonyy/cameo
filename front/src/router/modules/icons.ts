@@ -24,7 +24,8 @@ const routes: Array<RouteRecordRaw> = [
           alwaysShow: true,
           // permissions: ['dashboard_workplace'],
         },
-        component: () => import('@/views/icons/antd.vue'),
+        component: () => import('@/views/icons/IconGallery.vue'),
+        props: { library: 'antd' },
       },
       {
         path: 'ionicons5',
@@ -32,7 +33,8 @@ const routes: Array<RouteRecordRaw> = [
         meta: {
           title: 'ionicons5',
         },
-        component: () => import('@/views/icons/ionicons5.vue'),
+        component: () => import('@/views/icons/IconGallery.vue'),
+        props: { library: 'ionicons5' },
       },
     ],
   },
