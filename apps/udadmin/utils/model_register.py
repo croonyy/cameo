@@ -17,7 +17,7 @@ from . import pmodels as pm
 from . import ui_tools
 from . import doc
 from .model_tools import model_perms, get_model_info
-from db.sa import get_db
+from db.sa import async_session_factory, get_db
 from . import http_resp as hr
 from .app_registry import AppReg
 from .i18n import t
@@ -38,6 +38,26 @@ class ModleRegister(metaclass=SingletonMeta):
     registered_info = set()
     perm_type = "model"  # 模型的增删改查的权限类型名称
 
+    def create_db_dependency(self, session_factory=async_session_factory):
+        async def _get_db():
+            async with session_factory() as session:
+                try:
+                    yield session
+                    await session.commit()
+                except Exception:
+                    await session.rollback()
+                    raise
+                finally:
+                    await session.close()
+
+        return _get_db
+
+    def get_model_db_dependency(self, info):
+        return info.get("db_dependency") or get_db
+
+    def get_model_session_factory(self, info):
+        return info.get("session_factory") or async_session_factory
+
     async def clear_unique_fk_conflicts(self, db: AsyncSession, model, values: dict, current_pk=None):
         mapper = sa_inspect(model)
         pk_col = mapper.primary_key[0]
@@ -53,6 +73,35 @@ class ModleRegister(metaclass=SingletonMeta):
             result = await db.execute(stmt)
             for conflict_obj in result.scalars().all():
                 setattr(conflict_obj, key, None)
+
+    async def get_unique_constraint_error(self, db: AsyncSession, model, values: dict, current_pk=None):
+        mapper = sa_inspect(model)
+        pk_col = mapper.primary_key[0]
+        for key, value in values.items():
+            if value is None or key not in mapper.columns:
+                continue
+            column = mapper.columns[key]
+            if not column.unique or column.foreign_keys:
+                continue
+            stmt = select(pk_col).where(getattr(model, key) == value)
+            if current_pk is not None:
+                stmt = stmt.where(pk_col != current_pk)
+            result = await db.execute(stmt)
+            conflict_pk = result.scalar_one_or_none()
+            if conflict_pk is not None:
+                msg = t("crud.unique_field_value_exists", field=key, value=value)
+                return {
+                    "code": rc.param_error,
+                    "msg": msg,
+                    "message": msg,
+                    "error": f"Unique constraint failed: {model.__name__}.{key}",
+                    "extra": {
+                        "field": key,
+                        "value": value,
+                        "conflict_id": conflict_pk,
+                    },
+                }
+        return None
 
     def coerce_db_values(self, model, values: dict) -> dict:
         mapper = sa_inspect(model)
@@ -71,6 +120,7 @@ class ModleRegister(metaclass=SingletonMeta):
         return coerced_values
 
     def create_item_generator(self, model, info):
+        db_dependency = self.get_model_db_dependency(info)
         # Build a dynamic Pydantic model from SQLAlchemy columns
         # mapper = _sa_inspect(model)
         field_defs = {}
@@ -91,7 +141,7 @@ class ModleRegister(metaclass=SingletonMeta):
         )
         async def create_item(
             user: Annotated[str, Depends(auth.get_user)],
-            db: AsyncSession = Depends(get_db),
+            db: AsyncSession = Depends(db_dependency),
             item: pmodel = None,  # type: ignore[valid-type]
         ):
             rd = info["ui"].check_readonly(item.model_dump(exclude_unset=True))
@@ -101,6 +151,9 @@ class ModleRegister(metaclass=SingletonMeta):
                 setattr(item, k, v(getattr(item, k)))
             values = item.model_dump(exclude_unset=True)
             values = self.coerce_db_values(model, values)
+            unique_error = await self.get_unique_constraint_error(db, model, values)
+            if unique_error:
+                return unique_error
             await self.clear_unique_fk_conflicts(db, model, values)
             obj = model(**values)
             db.add(obj)
@@ -111,6 +164,7 @@ class ModleRegister(metaclass=SingletonMeta):
         return create_item
 
     def delete_item_generator(self, model, info):
+        db_dependency = self.get_model_db_dependency(info)
         pk_name = sa_inspect(model).primary_key[0].name
 
         @auth.permission_required(
@@ -118,7 +172,7 @@ class ModleRegister(metaclass=SingletonMeta):
         )
         async def delete_item(
             user: Annotated[str, Depends(auth.get_user)],
-            db: AsyncSession = Depends(get_db),
+            db: AsyncSession = Depends(db_dependency),
             id: int = Path(title="The ID of the item"),
         ):
             stmt = select(model).where(getattr(model, pk_name) == id)
@@ -133,6 +187,7 @@ class ModleRegister(metaclass=SingletonMeta):
         return delete_item
 
     def update_item_generator(self, model, info):
+        db_dependency = self.get_model_db_dependency(info)
         pk_name = sa_inspect(model).primary_key[0].name
 
         @auth.permission_required(
@@ -140,7 +195,7 @@ class ModleRegister(metaclass=SingletonMeta):
         )
         async def update_item(
             user: Annotated[str, Depends(auth.get_user)],
-            db: AsyncSession = Depends(get_db),
+            db: AsyncSession = Depends(db_dependency),
             item: dict = {},
             id: int = Path(title="The ID of the item"),
         ):
@@ -160,6 +215,9 @@ class ModleRegister(metaclass=SingletonMeta):
                     "msg": t("error.object_not_found"),
                     "data": 0,
                     }
+            unique_error = await self.get_unique_constraint_error(db, model, item, current_pk=id)
+            if unique_error:
+                return unique_error
             await self.clear_unique_fk_conflicts(db, model, item, current_pk=id)
             for k, v in item.items():
                 if hasattr(obj, k):
@@ -170,6 +228,7 @@ class ModleRegister(metaclass=SingletonMeta):
         return update_item
 
     def read_item_generator(self, model, info):
+        db_dependency = self.get_model_db_dependency(info)
         pk_name = sa_inspect(model).primary_key[0].name
 
         @auth.permission_required(
@@ -177,7 +236,7 @@ class ModleRegister(metaclass=SingletonMeta):
         )
         async def get_item(
             user: Annotated[str, Depends(auth.get_user)],
-            db: AsyncSession = Depends(get_db),
+            db: AsyncSession = Depends(db_dependency),
             id: int = Path(title="The ID of the item"),
         ):
             stmt = select(model).where(getattr(model, pk_name) == id)
@@ -194,12 +253,14 @@ class ModleRegister(metaclass=SingletonMeta):
         return get_item
 
     def get_item_list_generator(self, model, info):
+        db_dependency = self.get_model_db_dependency(info)
+
         @auth.permission_required(
             "model", f"{info['app']}:{info['model_name']}:{model_perms['list']}"
         )
         async def get_item_list(
             user: Annotated[str, Depends(auth.get_user)],
-            db: AsyncSession = Depends(get_db),
+            db: AsyncSession = Depends(db_dependency),
             pb: pm.PaginatorBody = pm.PaginatorBody(),
         ):
             objs, total, page_cnt = await ot.get_model_objs(
@@ -222,6 +283,7 @@ class ModleRegister(metaclass=SingletonMeta):
         return get_item_list
 
     def relation_manage_generator(self, model, info):
+        db_dependency = self.get_model_db_dependency(info)
         req_schema = ot.gen_rel_fields_enum_class(model)
         mapper = sa_inspect(model)
         pk_name = mapper.primary_key[0].name
@@ -232,7 +294,7 @@ class ModleRegister(metaclass=SingletonMeta):
         )
         async def rel_manage(
             user: Annotated[str, Depends(auth.get_user)],
-            db: AsyncSession = Depends(get_db),
+            db: AsyncSession = Depends(db_dependency),
             reqb: req_schema = None,  # type: ignore
         ):
             action = reqb.action.value
@@ -520,7 +582,6 @@ class ModleRegister(metaclass=SingletonMeta):
     def get_filter_fields_distinct_values_generator(self):
         async def get_filter_fields_distinct_values(
             user=Depends(auth.get_user),
-            db: AsyncSession = Depends(get_db),
             req: pm.FilterFieldsDistinctValues = pm.FilterFieldsDistinctValues(),
         ):
             union_name = req.app_model_name
@@ -536,43 +597,45 @@ class ModleRegister(metaclass=SingletonMeta):
                     t("crud.filter_field_not_in_model", field=field, model=model.__name__)
                 )
             pb = req.paginator
-            where_clause = ot.build_sa_filter(pb.filters, model)
-            # Count total distinct values
-            count_stmt = select(func.count()).select_from(
-                select(getattr(model, field)).distinct().where(where_clause).subquery()
-            )
-            total = (await db.execute(count_stmt)).scalar() or 0
-            if total == 0:
-                return {
-                    "code": rc.success_request,
-                    "data": {"values": [], "paginator": pb},
-                    "msg": t("crud.no_data_with_filter", filters=pb.filters),
-                }
-            page_cnt = ceil(total / pb.page_size)
-            if pb.curr_page > page_cnt:
-                raise Exception(
-                    t("crud.page_out_of_range", current_page=pb.curr_page, total_page_count=page_cnt)
+            session_factory = self.get_model_session_factory(model_info)
+            async with session_factory() as db:
+                where_clause = ot.build_sa_filter(pb.filters, model)
+                # Count total distinct values
+                count_stmt = select(func.count()).select_from(
+                    select(getattr(model, field)).distinct().where(where_clause).subquery()
                 )
-            # Query distinct values with pagination
-            distinct_stmt = (
-                select(getattr(model, field).distinct())
-                .where(where_clause)
-                .order_by(getattr(model, field))
-                .offset((pb.curr_page - 1) * pb.page_size)
-                .limit(pb.page_size)
-            )
-            result = await db.execute(distinct_stmt)
-            distinct_values = [row[0] for row in result.all()]
-            data = {
-                "values": distinct_values,
-                "paginator": {
-                    "curr_page": pb.curr_page,
-                    "page_size": pb.page_size,
-                    "total": total,
-                    "page_cnt": page_cnt,
-                },
-            }
-            return {"code": rc.success, "data": data, "msg": ok_msg()}
+                total = (await db.execute(count_stmt)).scalar() or 0
+                if total == 0:
+                    return {
+                        "code": rc.success_request,
+                        "data": {"values": [], "paginator": pb},
+                        "msg": t("crud.no_data_with_filter", filters=pb.filters),
+                    }
+                page_cnt = ceil(total / pb.page_size)
+                if pb.curr_page > page_cnt:
+                    raise Exception(
+                        t("crud.page_out_of_range", current_page=pb.curr_page, total_page_count=page_cnt)
+                    )
+                # Query distinct values with pagination
+                distinct_stmt = (
+                    select(getattr(model, field).distinct())
+                    .where(where_clause)
+                    .order_by(getattr(model, field))
+                    .offset((pb.curr_page - 1) * pb.page_size)
+                    .limit(pb.page_size)
+                )
+                result = await db.execute(distinct_stmt)
+                distinct_values = [row[0] for row in result.all()]
+                data = {
+                    "values": distinct_values,
+                    "paginator": {
+                        "curr_page": pb.curr_page,
+                        "page_size": pb.page_size,
+                        "total": total,
+                        "page_cnt": page_cnt,
+                    },
+                }
+                return {"code": rc.success, "data": data, "msg": ok_msg()}
 
         return get_filter_fields_distinct_values
 
@@ -768,6 +831,8 @@ class ModleRegister(metaclass=SingletonMeta):
         fetch: bool = True,
         prefix: str = "models",
         ui_info: Optional[ui_tools.UiInfo] = None,
+        session_factory=None,
+        db_dependency=None,
     ):
         app_name = getattr(model, "app_name", "") or model.__tablename__.split("_")[0]
         model_name = model.__name__
@@ -813,12 +878,18 @@ class ModleRegister(metaclass=SingletonMeta):
 
         route_model_name = model_name
         ui_info = ui_info or ui_tools.UiInfo(model=model)
+        session_factory = session_factory or async_session_factory
+        db_dependency = db_dependency or self.create_db_dependency(session_factory)
         if union_key in self.models_info.keys():
-            model_info = self.models_info.get(union_key)
+            model_info = self.models_info[union_key]
+            model_info.setdefault("session_factory", session_factory)
+            model_info.setdefault("db_dependency", db_dependency)
         else:
             model_info = self.get_model_info(model, ui_info=ui_info)
             model_info["ui"] = ui_info
             model_info["url"] = f"{prefix}/{route_model_name}"
+            model_info["session_factory"] = session_factory
+            model_info["db_dependency"] = db_dependency
             self.models_info[f"{app_name}:{model_name}"] = model_info
 
         prefix = (prefix if prefix.startswith("/") else f"/{prefix}") if prefix else ""

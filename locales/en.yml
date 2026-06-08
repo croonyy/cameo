@@ -43,6 +43,7 @@ crud:
   filter_field_not_in_model: "Filter field[{field}] is not in model[{model}]"
   filter_symbol_not_configured: "Filter symbol[{symbol}] is not configured."
   invalid_logic_operator: "Invalid logic operator: {logic}"
+  unique_field_value_exists: "Field '{field}' must be unique; value already exists: {value}"
 validation:
   invalid_params: "Invalid request parameters"
   field_required: "Field {field} is required"

@@ -43,6 +43,7 @@ crud:
   filter_field_not_in_model: "筛选字段[{field}]不在模型[{model}]中"
   filter_symbol_not_configured: "筛选符号[{symbol}]未配置。"
   invalid_logic_operator: "无效的逻辑操作符：{logic}"
+  unique_field_value_exists: "字段 '{field}' 必须唯一，当前值已存在：{value}"
 validation:
   invalid_params: "请求参数错误"
   field_required: "字段 {field} 为必填项"
