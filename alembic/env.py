@@ -14,7 +14,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 # --------------------------
 # 🔥 自动导入所有 apps/*/models.py
 # --------------------------
-from db.sa import Base
+from apps.udadmin.utils.model_base import get_base
+
+Base = get_base("default")
 
 APPS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "apps")
 

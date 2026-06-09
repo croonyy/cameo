@@ -11,7 +11,7 @@ from config.settings import BASE_DIR
 from config import settings
 from fastapi.middleware.cors import CORSMiddleware
 import os
-from db.sa import init_db, close_db
+from apps.udadmin.utils.model_base import init_db, close_db
 
 if settings.LOCATE_PRINT:
     from apps.udadmin.utils import locate_print

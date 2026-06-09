@@ -1,5 +1,6 @@
 import importlib
 import traceback
+from contextvars import ContextVar
 
 from fastapi import FastAPI
 
@@ -25,6 +26,18 @@ def default_registered_app_name(import_path: str) -> str:
     return parts[0]
 
 
+current_app_reg: ContextVar["AppReg | None"] = ContextVar("current_app_reg", default=None)
+
+
+def get_current_app_reg():
+    return current_app_reg.get()
+
+
+def get_current_app_name() -> str | None:
+    app_reg = get_current_app_reg()
+    return app_reg.app_name if app_reg else None
+
+
 class AppReg:
     DEFAULT_APP_ICON = "antd:AppstoreOutlined"
 
@@ -32,11 +45,18 @@ class AppReg:
         self,
         app_path: str,
         router_prefix: str | None = None,
-        name: str | None = None,
+        app_name: str | None = None,
         app_icon: str = DEFAULT_APP_ICON,
+        **kwargs,
     ):
+        if "name" in kwargs and app_name is None:
+            app_name = kwargs.pop("name")
+        if kwargs:
+            unexpected = ", ".join(kwargs.keys())
+            raise TypeError(f"Unexpected AppReg arguments: {unexpected}")
+
         self.app_path = app_path
-        app_name = default_registered_app_name(app_path)
+        app_name = app_name or default_registered_app_name(app_path)
         self.app_name = app_name
 
         if router_prefix is None:
@@ -45,7 +65,6 @@ class AppReg:
             router_prefix = f"/{router_prefix}"
 
         self.router_prefix = router_prefix
-        self.name = name or app_name
         self.app_icon = app_icon
 
 
@@ -62,22 +81,26 @@ def mount_registered_apps(app: FastAPI) -> None:
             continue
 
         try:
-            sub_app = import_app(app_reg.app_path)
+            token = current_app_reg.set(app_reg)
+            try:
+                sub_app = import_app(app_reg.app_path)
+            finally:
+                current_app_reg.reset(token)
             app.mount(
                 app_reg.router_prefix,
                 sub_app,
-                name=app_reg.name,
+                name=app_reg.app_name,
             )
             print(
                 "mounted app: "
                 f"{app_reg.app_path} -> {app_reg.router_prefix} "
-                f"(name={app_reg.name})"
+                f"(app_name={app_reg.app_name})"
             )
         except Exception as exc:
             print(
                 "skip registered app: "
                 f"{app_reg.app_path} -> {app_reg.router_prefix} "
-                f"(name={app_reg.name}) failed: "
+                f"(app_name={app_reg.app_name}) failed: "
                 f"{exc.__class__.__name__}: {exc}"
             )
             if getattr(settings, "DEBUG", False):

@@ -18,9 +18,12 @@ from apps.udadmin import models as md
 from apps.udadmin import ui as udadmin_ui
 from apps.udadmin.utils.auth import pwd_context as pc
 from apps.udadmin.utils.model_tools import model_perms
+from apps.udadmin.utils.model_base import get_engine, get_model_app_name, get_session_factory
 from apps.udadmin.utils.ui_tools import UiInfo, get_custom_action_permissions
 from config.settings import BASE_DIR
-from db.sa import async_session_factory, engine
+
+async_session_factory = get_session_factory()
+engine = get_engine()
 
 
 BASE_PATH = Path(BASE_DIR)
@@ -123,7 +126,7 @@ def _iter_models(module) -> list[type]:
 
 
 def _permission_name(model: type, action: str) -> str:
-    app_name = getattr(model, "app_name", model.__tablename__.split("_")[0])
+    app_name = get_model_app_name(model)
     return f"{app_name}:{model.__name__}:{action}"
 
 
@@ -144,7 +147,7 @@ def _custom_action_permission_names() -> list[str]:
     names = []
     for ui_info in _iter_ui_infos(udadmin_ui, demo_ui):
         model = ui_info._model
-        app_name = getattr(model, "app_name", model.__tablename__.split("_")[0])
+        app_name = get_model_app_name(model)
         names.extend(
             get_custom_action_permissions(
                 app_name, model.__name__, getattr(ui_info, "custom_actions", [])
@@ -159,7 +162,7 @@ def _custom_action_perm_names_for_app(app_name: str) -> list[str]:
 
 def _custom_action_perm_names_for_models(models: list[type]) -> list[str]:
     prefixes = {
-        f"{getattr(model, 'app_name', model.__tablename__.split('_')[0])}:{model.__name__}:"
+        f"{get_model_app_name(model)}:{model.__name__}:"
         for model in models
     }
     return [
@@ -188,7 +191,7 @@ async def _create_permissions(session):
                     id=next_id,
                     name=_permission_name(model, action),
                     permission_type_id=1,
-                    extra={"app": getattr(model, "app_name", ""), "model": model.__name__, "action": action},
+                    extra={"app": get_model_app_name(model), "model": model.__name__, "action": action},
                 )
             )
             next_id += 1
@@ -209,8 +212,8 @@ async def _create_permissions(session):
 
 async def _create_roles(session, permissions_by_name: dict[str, md.Permission], models: list[type]):
     all_model_perms = list(permissions_by_name.values())
-    udadmin_models = [model for model in models if getattr(model, "app_name", "") == "udadmin"]
-    demo_models = [model for model in models if getattr(model, "app_name", "") == "demo"]
+    udadmin_models = [model for model in models if get_model_app_name(model) == "udadmin"]
+    demo_models = [model for model in models if get_model_app_name(model) == "demo"]
 
     role_specs = [
         ("超级管理员角色", [perm.name for perm in all_model_perms]),

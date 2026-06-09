@@ -14,9 +14,10 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from apps.udadmin.utils.ui_tools import FieldInfo
-from db.sa import Base
+from apps.udadmin.utils.model_base import get_base
 
-app_name = "udadmin"
+
+Base = get_base(database="default", app_name="udadmin")
 
 # M2M Association Tables
 user_role = Table(
@@ -78,7 +79,6 @@ class DtBase(Base):
 
 class User(DtBase):
     __tablename__ = "user"
-    app_name = "udadmin"
     id = Column(
         Integer,
         primary_key=True,
@@ -135,7 +135,6 @@ class User(DtBase):
 
 class Role(DtBase):
     __tablename__ = "role"
-    app_name = "udadmin"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), unique=True, nullable=False)
     extra = Column(JSON, nullable=True)
@@ -157,7 +156,6 @@ class Role(DtBase):
 
 class PermissionType(DtBase):
     __tablename__ = "permissiontype"
-    app_name = "udadmin"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), unique=True, nullable=False)
     extra = Column(JSON, nullable=True)
@@ -176,7 +174,6 @@ class PermissionType(DtBase):
 
 class Permission(DtBase):
     __tablename__ = "permission"
-    app_name = "udadmin"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), unique=True, nullable=False)
     permission_type_id = Column(
@@ -204,7 +201,6 @@ class Permission(DtBase):
 
 class ConfigType(DtBase):
     __tablename__ = "configtype"
-    app_name = "udadmin"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), unique=True, nullable=False)
     extra = Column(JSON, nullable=True)
@@ -221,7 +217,6 @@ class ConfigType(DtBase):
 
 class Config(DtBase):
     __tablename__ = "config"
-    app_name = "udadmin"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), unique=True, nullable=False)
     config_type_id = Column(Integer, ForeignKey("configtype.id", ondelete="CASCADE"))
@@ -240,7 +235,6 @@ class Config(DtBase):
 
 class Record(DtBase):
     __tablename__ = "record"
-    app_name = "udadmin"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(255), nullable=True)
     info = Column(JSON, nullable=True)

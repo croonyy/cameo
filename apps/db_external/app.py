@@ -8,7 +8,6 @@ from apps.udadmin.utils import error_handler as eh
 from apps.udadmin.utils import middleware as mw
 from apps.udadmin.utils.model_register import mr
 from apps.udadmin.utils.openapi_tags import openapi_tags
-from db.sa_external import async_session_factory
 
 
 app = FastAPI(
@@ -24,5 +23,5 @@ app.exception_handler(eh.AppException)(eh.AppExceptionHandler)
 app.middleware("http")(mw.LocaleMiddleware)
 app.middleware("http")(mw.CommonExceptionHandler)
 
-mr.register(app, md.Department, ui_info=ui.DepartmentUi, session_factory=async_session_factory)
-mr.register(app, md.Employee, ui_info=ui.EmployeeUi, session_factory=async_session_factory)
+mr.register(app, md.Department, ui_info=ui.DepartmentUi)
+mr.register(app, md.Employee, ui_info=ui.EmployeeUi)

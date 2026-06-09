@@ -29,6 +29,7 @@ LOCALE_FILE_MAP = {
 
 current_locale: ContextVar[str] = ContextVar("current_locale", default=DEFAULT_LOCALE)
 _translations: dict[str, dict[str, Any]] = {}
+_missing_translation_warnings: set[tuple[str, str]] = set()
 
 
 def _locale_dir() -> Path:
@@ -138,7 +139,19 @@ def t(key: str, request: Request | None = None, locale: str | None = None, **kwa
     active_locale = normalize_locale(locale) if locale else get_locale(request)
     translations = _translations.get(active_locale, {})
     default_translations = _translations.get(DEFAULT_LOCALE, {})
-    template = translations.get(key) or default_translations.get(key) or key
+    template = translations.get(key)
+    if template is None:
+        warning_key = (active_locale, key)
+        if warning_key not in _missing_translation_warnings:
+            _missing_translation_warnings.add(warning_key)
+            print(f"i18n missing translation: locale={active_locale}, key={key}")
+        template = default_translations.get(key)
+    if template is None:
+        default_warning_key = (DEFAULT_LOCALE, key)
+        if active_locale != DEFAULT_LOCALE and default_warning_key not in _missing_translation_warnings:
+            _missing_translation_warnings.add(default_warning_key)
+            print(f"i18n missing translation: locale={DEFAULT_LOCALE}, key={key}")
+        template = key
     try:
         return template.format(**kwargs)
     except Exception:

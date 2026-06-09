@@ -10,7 +10,7 @@ from sqlalchemy import inspect
 import traceback
 from apps.udadmin.models import Permission
 from apps.udadmin.utils.model_tools import get_model_info
-# from db.sa import init_db, engine
+# from apps.udadmin.utils.model_base import init_db, get_engine
 
 
 # @pytest.mark.asyncio

@@ -17,7 +17,7 @@ from . import pmodels as pm
 from . import ui_tools
 from . import doc
 from .model_tools import model_perms, get_model_info
-from db.sa import async_session_factory, get_db
+from . import model_base
 from . import http_resp as hr
 from .app_registry import AppReg
 from .i18n import t
@@ -38,7 +38,8 @@ class ModleRegister(metaclass=SingletonMeta):
     registered_info = set()
     perm_type = "model"  # 模型的增删改查的权限类型名称
 
-    def create_db_dependency(self, session_factory=async_session_factory):
+    def create_db_dependency(self, session_factory=None):
+        session_factory = session_factory or model_base.get_session_factory()
         async def _get_db():
             async with session_factory() as session:
                 try:
@@ -53,10 +54,14 @@ class ModleRegister(metaclass=SingletonMeta):
         return _get_db
 
     def get_model_db_dependency(self, info):
-        return info.get("db_dependency") or get_db
+        if info.get("db_dependency"):
+            return info["db_dependency"]
+        return model_base.get_db_dependency(info.get("database"))
 
     def get_model_session_factory(self, info):
-        return info.get("session_factory") or async_session_factory
+        if info.get("session_factory"):
+            return info["session_factory"]
+        return model_base.get_session_factory(info.get("database"))
 
     async def clear_unique_fk_conflicts(self, db: AsyncSession, model, values: dict, current_pk=None):
         mapper = sa_inspect(model)
@@ -358,7 +363,7 @@ class ModleRegister(metaclass=SingletonMeta):
                             "page_cnt": page_cnt,
                         },
                         "related_model": related_model.__name__,
-                        "app_name": getattr(related_model, "app_name", "") or "",
+                        "app_name": model_base.get_model_app_name(related_model),
                     },
                 }
             elif action == "manage":
@@ -441,7 +446,7 @@ class ModleRegister(metaclass=SingletonMeta):
                             "page_cnt": page_cnt,
                         },
                         "related_model": related_model.__name__,
-                        "app_name": getattr(related_model, "app_name", "") or "",
+                        "app_name": model_base.get_model_app_name(related_model),
                     },
                 }
             else:
@@ -458,13 +463,12 @@ class ModleRegister(metaclass=SingletonMeta):
             registered_apps = {}
             for app_reg in getattr(settings, "REGISTERED_APPS", []):
                 registered_apps[app_reg.app_name] = app_reg
-                registered_apps[app_reg.name] = app_reg
             for k, v in self.models_info.items():
                 if k in allow_models:
                     Meta = getattr(v["model"], "Meta", None)
                     model_app_name = getattr(Meta, "ud_app", None) or v["app"]
                     app_reg = registered_apps.get(model_app_name)
-                    registered_app_name = getattr(app_reg, "name", model_app_name)
+                    registered_app_name = getattr(app_reg, "app_name", model_app_name)
                     app_menu_name_key = f"ui.apps.{registered_app_name}.menu_name"
                     app_description_key = f"ui.apps.{registered_app_name}.description"
                     app_menu_name = t(app_menu_name_key)
@@ -644,7 +648,7 @@ class ModleRegister(metaclass=SingletonMeta):
             perms = list(self.models_info.keys())
         else:
             from apps.udadmin.models import Permission, PermissionType, Role
-            from db.sa import async_session_factory
+            async_session_factory = model_base.get_session_factory()
 
             async with async_session_factory() as session:
                 # User direct permissions
@@ -674,7 +678,7 @@ class ModleRegister(metaclass=SingletonMeta):
 
     async def get_user_model_perms(self, user, union_name: str):
         from apps.udadmin.models import Permission, PermissionType, Role
-        from db.sa import async_session_factory
+        async_session_factory = model_base.get_session_factory()
 
         async with async_session_factory() as session:
             if cast(bool, user.is_superuser):
@@ -773,7 +777,7 @@ class ModleRegister(metaclass=SingletonMeta):
 
     async def sync_registered_model_permissions(self) -> list[str]:
         from apps.udadmin.models import Permission, PermissionType
-        from db.sa import async_session_factory
+        async_session_factory = model_base.get_session_factory()
 
         print(click.style("SYNC:     ", fg="cyan") + "registered model permissions sync started.")
         specs = self.get_registered_model_permission_specs()
@@ -833,8 +837,10 @@ class ModleRegister(metaclass=SingletonMeta):
         ui_info: Optional[ui_tools.UiInfo] = None,
         session_factory=None,
         db_dependency=None,
+        database: str | None = None,
     ):
-        app_name = getattr(model, "app_name", "") or model.__tablename__.split("_")[0]
+        app_name = model_base.get_model_app_name(model)
+        database = database or model_base.get_model_database(model)
         model_name = model.__name__
         union_key = f"{app_name}:{model_name}"
         router_id = id(router)
@@ -878,18 +884,20 @@ class ModleRegister(metaclass=SingletonMeta):
 
         route_model_name = model_name
         ui_info = ui_info or ui_tools.UiInfo(model=model)
-        session_factory = session_factory or async_session_factory
-        db_dependency = db_dependency or self.create_db_dependency(session_factory)
+        session_factory = session_factory or model_base.get_session_factory(database)
+        db_dependency = db_dependency or model_base.get_db_dependency(database)
         if union_key in self.models_info.keys():
             model_info = self.models_info[union_key]
             model_info.setdefault("session_factory", session_factory)
             model_info.setdefault("db_dependency", db_dependency)
+            model_info.setdefault("database", database)
         else:
             model_info = self.get_model_info(model, ui_info=ui_info)
             model_info["ui"] = ui_info
             model_info["url"] = f"{prefix}/{route_model_name}"
             model_info["session_factory"] = session_factory
             model_info["db_dependency"] = db_dependency
+            model_info["database"] = database
             self.models_info[f"{app_name}:{model_name}"] = model_info
 
         prefix = (prefix if prefix.startswith("/") else f"/{prefix}") if prefix else ""

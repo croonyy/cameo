@@ -22,9 +22,10 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from apps.udadmin.utils.ui_tools import FieldInfo
-from db.sa import Base
+from apps.udadmin.utils.model_base import get_base
 
-app_name = "demo"
+
+Base = get_base(database="default", app_name="demo")
 
 
 detail_relation = Table(
@@ -47,7 +48,6 @@ detail_relation = Table(
 
 class ForeignKeyModel(Base):
     __tablename__ = "foreignkeymodel"
-    app_name = app_name
 
     id = Column(
         Integer,
@@ -80,7 +80,6 @@ class ForeignKeyModel(Base):
 
 class RelationModel(Base):
     __tablename__ = "relationmodel"
-    app_name = app_name
 
     id = Column(
         Integer,
@@ -121,7 +120,6 @@ class RelationModel(Base):
 
 class DetailModel(Base):
     __tablename__ = "detailmodel"
-    app_name = app_name
 
     id = Column(
         Integer,

@@ -58,7 +58,7 @@ async def login(req: pm.LoginForm):
     password = req.password.strip()
     user = await auth.authenticate(username, password)
     if not user:
-        raise Exception({"code": rc.username_password_error, "msg": t("auth.invalid_credentials")})
+        return {"code": rc.user_error, "msg": t("auth.invalid_credentials")}
     user_json = jsonable_encoder(
         _sa_columns_to_dict(user), custom_encoder=ec.custom_encoder
     )

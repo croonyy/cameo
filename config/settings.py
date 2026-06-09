@@ -26,6 +26,27 @@ DATABASE_URL = f"sqlite+aiosqlite:///{os.path.join(BASE_DIR, 'db', 'db.sqlite3')
 # DATABASE_URL = "postgresql+asyncpg://user:pass@localhost:5432/cameo"
 SQL_LOG = False
 
+DATABASES = {
+    "default": {
+        "url": DATABASE_URL,
+        "engine_options": {
+            "echo": SQL_LOG,
+            "connect_args": {"check_same_thread": False}
+            if DATABASE_URL.startswith("sqlite")
+            else {},
+        },
+        "managed_by_alembic": True,
+    },
+    "db_external": {
+        "url": f"sqlite+aiosqlite:///{os.path.join(BASE_DIR, 'db', 'db_external.sqlite3')}",
+        "engine_options": {
+            "echo": SQL_LOG,
+            "connect_args": {"check_same_thread": False},
+        },
+        "managed_by_alembic": False,
+    },
+}
+
 # When enabled, startup checks registered models and creates missing model permissions.
 # It only inserts missing Permission rows; it does not delete permissions or change role/user grants.
 SYNC_REGISTERED_MODEL_PERMISSIONS = True
@@ -34,12 +55,12 @@ SYNC_REGISTERED_MODEL_PERMISSIONS = True
 # app_path is required, for example AppReg("apps.udadmin.app:app")
 # or AppReg(app_path="apps.demo.app:app").
 # router_prefix defaults to "/<app directory name>".
-# name defaults to the app directory name.
+# app_name defaults to the app directory name.
 # app_icon defaults to "antd:AppstoreOutlined".
 REGISTERED_APPS = [
     AppReg("apps.udadmin.app:app", app_icon="antd:UserOutlined"),
-    AppReg(app_path="apps.demo.app:app", router_prefix="demo", name="demo"),
-    AppReg(app_path="apps.db_external.app:app", router_prefix="db_external", name="db_external", app_icon="antd:DatabaseOutlined"),
+    AppReg("apps.demo.app:app"),
+    # AppReg("apps.db_external.app:app", app_icon="antd:DatabaseOutlined"),
 ]
 
 AUTHENTICATION_BACKENDS = [

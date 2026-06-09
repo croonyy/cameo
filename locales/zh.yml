@@ -64,6 +64,9 @@ ui:
     app2:
       menu_name: "应用 2"
       description: "应用 2，测试描述"
+    db_external:
+      menu_name: "外部数据库"
+      description: "外部数据库示例，部门管理，员工管理"
   models:
     User: "用户管理"
     Role: "角色管理"
@@ -76,6 +79,8 @@ ui:
     MainModel: "主模型"
     ForeignKeyModel: "外键模型"
     RelationModel: "关系模型"
+    Department: "外部部门"
+    Employee: "外部员工"
   tables:
     User: "用户表"
     Role: "角色表"
@@ -87,6 +92,8 @@ ui:
     ForeignKeyModel: "用于测试外键和一对多关系"
     RelationModel: "用于测试一对一和多对多关系"
     DetailModel: "覆盖常用数据库字段类型并测试全部关系"
+    Department: "外部数据库中的部门表"
+    Employee: "外部数据库中的员工表"
   fields:
     created_at: "创建时间"
     updated_at: "更新时间"

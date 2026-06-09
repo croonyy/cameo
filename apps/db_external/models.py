@@ -4,19 +4,20 @@ These models map existing database tables. Schema changes should be made in the
 database first, then reflected here manually.
 """
 
+from typing import cast
+
 from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.orm import relationship
 
 from apps.udadmin.utils.ui_tools import FieldInfo
-from db.sa_external import Base
+from apps.udadmin.utils.model_base import get_base
 
 
-app_name = "db_external"
+Base = get_base(database="db_external", app_name="db_external")
 
 
 class Department(Base):
     __tablename__ = "department"
-    app_name = app_name
 
     id = Column(Integer, primary_key=True, autoincrement=True, info=FieldInfo(ui_name="ID", ui_align="M"))
     name = Column(String(100), nullable=False, unique=True, info=FieldInfo(ui_name="部门名称", ui_align="L"))
@@ -27,8 +28,9 @@ class Department(Base):
 
     employees = relationship("Employee", back_populates="department", info=FieldInfo(ui_align="M"))
 
-    def __str__(self):
-        return self.name or f"<Department: {self.id}>"
+    def __str__(self) -> str:
+        name = cast(str | None, self.name)
+        return name or f"<Department: {self.id}>"
 
     class Meta:
         menu_name = "外部部门"
@@ -37,7 +39,6 @@ class Department(Base):
 
 class Employee(Base):
     __tablename__ = "employee"
-    app_name = app_name
 
     id = Column(Integer, primary_key=True, autoincrement=True, info=FieldInfo(ui_name="ID", ui_align="M"))
     department_id = Column(Integer, ForeignKey("department.id"), info=FieldInfo(ui_name="所属部门"))
@@ -51,8 +52,9 @@ class Employee(Base):
 
     department = relationship("Department", back_populates="employees", info=FieldInfo(ui_align="M"))
 
-    def __str__(self):
-        return self.name or f"<Employee: {self.id}>"
+    def __str__(self) -> str:
+        name = cast(str | None, self.name)
+        return name or f"<Employee: {self.id}>"
 
     class Meta:
         menu_name = "外部员工"

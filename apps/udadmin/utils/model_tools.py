@@ -1,13 +1,13 @@
 from sqlalchemy import inspect
 from collections import OrderedDict
 
-from sqlalchemy.orm import RelationshipProperty, ColumnProperty
+from sqlalchemy.orm import DeclarativeBase, RelationshipProperty, ColumnProperty
 from sqlalchemy.types import Enum
 from . import enums as es
 from . import doc
 from . import udtools as ut
 from . import ui_cmps
-from db.sa import Base
+from . import model_base
 
 model_perms = {
     "create": "create",
@@ -17,9 +17,9 @@ model_perms = {
     "read": "read",
 }
 
-def get_model_info(model: type["Base"], ui_info=None):
+def get_model_info(model: type[DeclarativeBase], ui_info=None):
     mapper = inspect(model)
-    app_name = getattr(model, "app_name", "") or model.__tablename__.split("_")[0]
+    app_name = model_base.get_model_app_name(model)
     model_name = model.__name__
 
     fields_info = OrderedDict()

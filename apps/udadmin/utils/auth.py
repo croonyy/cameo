@@ -27,7 +27,9 @@ from .i18n import t
 from config import settings
 from . import jwt_auth as ja
 from .. import models as md
-from db.sa import async_session_factory
+from .model_base import get_session_factory
+
+async_session_factory = get_session_factory()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

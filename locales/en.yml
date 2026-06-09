@@ -64,6 +64,9 @@ ui:
     app2:
       menu_name: "App 2"
       description: "App 2, test description"
+    db_external:
+      menu_name: "External Database"
+      description: "External database example, department management, employee management"
   models:
     User: "User Management"
     Role: "Role Management"
@@ -76,6 +79,8 @@ ui:
     MainModel: "Main Models"
     ForeignKeyModel: "Foreign Key Models"
     RelationModel: "Relation Models"
+    Department: "External Departments"
+    Employee: "External Employees"
   tables:
     User: "User table"
     Role: "Role table"
@@ -87,6 +92,8 @@ ui:
     ForeignKeyModel: "Used to test foreign keys and one-to-many relationships"
     RelationModel: "Used to test one-to-one and many-to-many relationships"
     DetailModel: "Covers common database field types and tests all relationships"
+    Department: "Department table in the external database"
+    Employee: "Employee table in the external database"
   fields:
     created_at: "Created at"
     updated_at: "Updated at"

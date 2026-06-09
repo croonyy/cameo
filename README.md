@@ -71,7 +71,7 @@ REGISTERED_APPS = [
 
 - `app_path`：FastAPI app 导入路径，必填，例如 `AppReg("apps.udadmin.app:app")` 或 `AppReg(app_path="apps.demo.app:app")`。
 - `router_prefix`：挂载路径，默认 `/<app 目录名>`，例如 `/udadmin`、`/demo`。
-- `name`：注册名称，默认 app 目录名。
+- `app_name`：应用名称，默认 app 目录名。
 - `app_icon`：前端应用图标，默认 `antd:AppstoreOutlined`。
 
 ## Demo App
@@ -270,6 +270,164 @@ DetailModelUi = UiInfo(
 )
 ```
 
+## 管理外部数据库
+
+Cameo 可以把已经存在的数据库表接入后台管理。这个场景的方向是“数据库到模型”：数据库结构已经存在，手动或通过反射工具生成 SQLAlchemy 模型，然后注册到一个独立 app 中进行 CRUD 管理。不要对外部数据库执行 Alembic 迁移，也不要在应用启动时对外部数据库调用 `Base.metadata.create_all()` 或 `drop_all()`。
+
+基本步骤：
+
+1. 准备外部数据库，例如 `db/db_external.sqlite3`，其中已经存在业务表和数据。
+2. 在 `config/settings.py` 的 `DATABASES` 中新增一个数据库配置项。
+3. 在 `apps/` 下新建独立 app，例如 `apps/db_external/`。
+4. 根据外部数据库表生成或手写 `apps/db_external/models.py`。
+5. 配置 `apps/db_external/ui.py`，声明列表字段、筛选字段、搜索字段、可编辑字段等。
+6. 通过 `Base = get_base(database="db_external", app_name="db_external")` 让模型继承对应数据库和应用的 Base，`mr.register()` 会自动使用对应数据库连接和 app 名。
+7. 在 `config/settings.py` 的 `REGISTERED_APPS` 中注册该 app。
+8. 外部数据库结构变化后，手动同步修改 `models.py`，不生成迁移文件。
+
+外部数据库配置示例：
+
+```python
+# config/settings.py
+import os
+
+
+DATABASES = {
+    "default": {
+        "url": DATABASE_URL,
+        "engine_options": {
+            "echo": SQL_LOG,
+            "connect_args": {"check_same_thread": False}
+            if DATABASE_URL.startswith("sqlite")
+            else {},
+        },
+        "managed_by_alembic": True,
+    },
+    "db_external": {
+        "url": f"sqlite+aiosqlite:///{os.path.join(BASE_DIR, 'db', 'db_external.sqlite3')}",
+        "engine_options": {
+            "echo": SQL_LOG,
+            "connect_args": {"check_same_thread": False},
+        },
+        "managed_by_alembic": False,
+    },
+}
+```
+
+外部表模型示例：
+
+```python
+# apps/db_external/models.py
+from typing import cast
+
+from sqlalchemy import Boolean, Column, DateTime, Integer, String
+from sqlalchemy.orm import relationship
+
+from apps.udadmin.utils.ui_tools import FieldInfo
+from apps.udadmin.utils.model_base import get_base
+
+
+Base = get_base(database="db_external", app_name="db_external")
+
+
+class Department(Base):
+    __tablename__ = "department"
+
+    id = Column(Integer, primary_key=True, autoincrement=True, info=FieldInfo(ui_name="ID"))
+    name = Column(String(100), nullable=False, unique=True, info=FieldInfo(ui_name="部门名称"))
+    code = Column(String(50), nullable=False, unique=True, info=FieldInfo(ui_name="部门编码"))
+    location = Column(String(100), info=FieldInfo(ui_name="办公地点"))
+    is_active = Column(Boolean, nullable=False, default=True, info=FieldInfo(ui_name="启用"))
+    created_at = Column(DateTime, info=FieldInfo(ui_name="创建时间"))
+
+    employees = relationship("Employee", back_populates="department")
+
+    def __str__(self) -> str:
+        name = cast(str | None, self.name)
+        return name or f"<Department: {self.id}>"
+
+    class Meta:
+        menu_name = "外部部门"
+        table_description = "外部数据库中的部门表"
+```
+
+UI 配置示例：
+
+```python
+# apps/db_external/ui.py
+from apps.udadmin.utils.ui_tools import UiInfo
+from apps.db_external import models as md
+
+
+DepartmentUi = UiInfo(
+    model=md.Department,
+    list_display=["id", "name", "code", "location", "is_active", "created_at"],
+    list_filter=["id", "is_active"],
+    search_fields=["name", "code", "location"],
+    editable_fields=["name", "code", "location", "is_active"],
+    readonly_fields=["created_at"],
+)
+```
+
+app 注册示例：
+
+```python
+# apps/db_external/app.py
+from fastapi import FastAPI
+from fastapi import exceptions as excep
+from starlette.exceptions import HTTPException
+
+from apps.db_external import models as md
+from apps.db_external import ui
+from apps.udadmin.utils import error_handler as eh
+from apps.udadmin.utils import middleware as mw
+from apps.udadmin.utils.model_register import mr
+from apps.udadmin.utils.openapi_tags import openapi_tags
+
+
+app = FastAPI(title="db_external", version="1.0.0", debug=True, openapi_tags=openapi_tags)
+
+app.exception_handler(excep.RequestValidationError)(eh.RequestValidationErrorHandler)
+app.exception_handler(HTTPException)(eh.HttpExceptionHandler)
+app.exception_handler(eh.AppException)(eh.AppExceptionHandler)
+app.middleware("http")(mw.LocaleMiddleware)
+app.middleware("http")(mw.CommonExceptionHandler)
+
+mr.register(app, md.Department, ui_info=ui.DepartmentUi)
+```
+
+主配置注册示例：
+
+```python
+# config/settings.py
+from apps.udadmin.utils.app_registry import AppReg
+
+
+REGISTERED_APPS = [
+    AppReg("apps.udadmin.app:app", app_icon="antd:UserOutlined"),
+    AppReg("apps.demo.app:app"),
+    AppReg(
+        app_path="apps.db_external.app:app",
+        router_prefix="db_external",
+        app_icon="antd:DatabaseOutlined",
+    ),
+]
+```
+
+模型使用哪个数据库的判断顺序是：优先读取模型类自己的 `database`；如果模型没有声明，则读取继承的 Base 上的数据库名；如果 `get_base()` 没有传入数据库名，并且模型也没有声明，则默认使用 `settings.DATABASES` 中配置的第一个数据库连接。
+
+模型使用哪个 app 的判断顺序是：优先读取模型类自己的 `app_name`；如果模型没有声明，则读取继承的 Base 上的 app 名；如果 Base 没有声明，则读取当前正在挂载的 `AppReg.app_name`；如果没有挂载上下文，则从模型模块路径推断，例如 `apps.db_external.models` 推断为 `db_external`；最后才从表名前缀推断。该模型的列表、详情、新增、编辑、删除、筛选值接口都会使用最终解析出的数据库和 app。
+
+同一个数据库里可以有多个 app，例如 `udadmin` 和 `demo` 都使用 `database="default"`，但分别使用 `app_name="udadmin"` 和 `app_name="demo"`。这些 app 共享同一个数据库 metadata，只是模型注册和前端路由归属不同。
+
+注意事项：
+
+- 外部数据库不参与当前项目的 Alembic 迁移。
+- 外部数据库变更后，手动同步 `apps/db_external/models.py`。
+- Base 的 `app_name` 应和 app 注册名保持一致，例如 `db_external`。
+- 外部库模型应通过 `get_base(database="数据库名", app_name="应用名")` 获取对应 `Base`，不要继承默认库的 Base。
+- 需要关系字段时，照常声明 `ForeignKey` 和 `relationship`，但要保证模型定义和现有数据库约束一致。
+
 ## 数据库迁移
 
 生成迁移：
@@ -295,6 +453,7 @@ python -m alembic downgrade -1
 常用配置位于 `config/settings.py`：
 
 - `DATABASE_URL`：数据库连接地址。
+- `DATABASES`：多数据库连接注册表，默认第一项为未声明 `model.database` 时使用的数据库。
 - `REGISTERED_APPS`：子应用挂载配置。
 - `AUTHENTICATION_BACKENDS`：认证后端。
 - `LDAP_CONFIG`：LDAP 参数。

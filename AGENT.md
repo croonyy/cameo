@@ -151,7 +151,7 @@ The model register also adds model metadata endpoints once per router:
 ## Model Conventions
 
 - Models live in `apps/<app_name>/models.py`.
-- All models should inherit from `db.sa.Base` or an abstract subclass of it.
+- All models should inherit from the Base returned by `apps.udadmin.utils.model_base.get_base(...)` or an abstract subclass of it.
 - Set `__tablename__` explicitly.
 - Set `app_name` on each model or module so generated permission/model keys are stable.
 - Use SQLAlchemy 2.0-compatible patterns.
@@ -177,7 +177,7 @@ Existing registered models:
 
 - `config/settings.py` controls `DATABASE_URL`.
 - `config/local_settings.py` can override settings and is imported opportunistically.
-- `db.sa.get_db()` yields an `AsyncSession`, commits on success, rolls back on error, and closes the session.
+- `apps.udadmin.utils.model_base.get_db_dependency()` yields an `AsyncSession`, commits on success, rolls back on error, and closes the session.
 - `init_db()` calls `Base.metadata.create_all`; migrations are still managed by Alembic.
 - `alembic/env.py` imports every `apps/*/models.py` file before reading `Base.metadata`.
 

@@ -20,7 +20,9 @@ from . import pmodels as pm
 from . import enums as es
 from .i18n import t
 from config import settings
-from db.sa import async_session_factory
+from .model_base import get_session_factory
+
+async_session_factory = get_session_factory()
 
 IS_SQLITE = settings.DATABASE_URL.startswith("sqlite")
 
