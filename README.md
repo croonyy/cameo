@@ -26,6 +26,50 @@ Cameo 是一个前后端分离的后台管理系统框架。后端使用 FastAPI
 - GitHub: https://github.com/croonyy/cameo
 - Gitee: https://gitee.com/croonyy/cameo
 
+## 效果展示
+
+### 登录页
+
+深色科技风登录界面，默认演示账号为 `admin/admin`，适合后台管理系统的入口场景。
+
+![登录页](static/images/login.png)
+
+### 主控台
+
+登录后的主控台展示系统导航、标签页、快捷工具栏和概览面板，用于承载后台首页与运营数据入口。
+
+![主控台](static/images/dashboard.png)
+
+### 模型列表
+
+基于后端模型自动生成 CRUD 列表，支持分页、排序、批量选择、行操作、列宽调整和横向滚动。
+
+![模型列表](static/images/list.png)
+
+### 查询过滤
+
+列表页内置模型字段过滤区，能够按字段类型生成输入框、选择器、布尔筛选等查询控件。
+
+![查询过滤](static/images/filter.png)
+
+### 编辑表单
+
+编辑页根据模型字段生成表单，覆盖数字、文本、日期、枚举、JSON 等常见字段类型。
+
+![编辑表单](static/images/edit.png)
+
+### 行内编辑
+
+列表支持行内编辑模式，可在表格中直接修改枚举、布尔值等字段，减少频繁跳转表单页的操作成本。
+
+![行内编辑](static/images/inline_edit.png)
+
+### API 文档
+
+后端基于 FastAPI 自动生成 Swagger API 文档，便于调试认证、CRUD 和业务接口。
+
+![API 文档](static/images/api_docs.png)
+
 ## 技术栈
 
 后端：
@@ -153,22 +197,13 @@ pnpm run dev
 - `frontend-build`：使用 `node:22-alpine` 安装依赖并执行前端打包。
 - `backend`：使用 `python:3.12-slim` 构建并运行后端，暴露 `3014` 端口。
 
-### 前端打包
+### 一键启动
 
 ```bash
-docker compose run --rm frontend-build
-```
-
-说明：
-
-- `--rm` 会在打包结束后删除前端构建容器。
-- 前端产物保留在宿主机 `static/admin`。
-- `node_modules` 和 pnpm store 使用 Docker volume 缓存，不写入宿主机源码目录。
-
-### 启动后端
-
-```bash
-docker compose up -d --build backend
+# 如果第一次启动需要构建前端，需要加参数 --profile build
+docker compose --profile build up
+# 如果不是第一次
+docker compose up
 ```
 
 启动后访问：
