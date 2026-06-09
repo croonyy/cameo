@@ -60,7 +60,7 @@ SYNC_REGISTERED_MODEL_PERMISSIONS = True
 REGISTERED_APPS = [
     AppReg("apps.udadmin.app:app", app_icon="antd:UserOutlined"),
     AppReg("apps.demo.app:app"),
-    # AppReg("apps.db_external.app:app", app_icon="antd:DatabaseOutlined"),
+    AppReg("apps.db_external.app:app", app_icon="antd:DatabaseOutlined"),
 ]
 
 AUTHENTICATION_BACKENDS = [
