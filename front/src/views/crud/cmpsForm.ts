@@ -9,6 +9,7 @@ import { buildChoiceOptions, getFieldUiName, hasChoices } from './tools';
 import { t } from '@/i18n';
 
 export const FormItemFieldComponentMap: Record<string, any> = {
+  InputField,
   SelectField,
   NumberComponent,
   BooleanField,
@@ -233,11 +234,30 @@ export function UUIDField(field: any) {
 }
 
 export function CharField(field: any) {
+  if (hasChoices(field.choices)) {
+    return EnumField(field);
+  }
   return {
     field,
     component: 'NInput',
     componentProps: {
       type: 'text',
+      style: { ...{ maxWidth: '320px' }, ...field['style'] },
+    },
+  };
+}
+
+export function InputField(field: any) {
+  if (hasChoices(field.choices)) {
+    return EnumField(field);
+  }
+  return {
+    field,
+    component: 'NInput',
+    componentProps: {
+      type: 'text',
+      placeholder: t('form.inputFieldPlaceholder', { field: getFieldUiName(field) }),
+      clearable: true,
       style: { ...{ maxWidth: '320px' }, ...field['style'] },
     },
   };

@@ -1,7 +1,7 @@
 <template>
   <n-dialog-provider>
     <n-notification-provider>
-      <n-message-provider>
+      <n-message-provider keep-alive-on-hover>
         <slot name="default"></slot>
       </n-message-provider>
     </n-notification-provider>

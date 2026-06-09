@@ -25,9 +25,9 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "static"))
 # 上下文管理，startup执行yield之前的代码，shutdown执行yield以下的代码
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize SQLAlchemy database
-    await init_db()
     mount_registered_apps(app)
+    # Registered apps import their models during mounting, so initialize after mount.
+    await init_db()
     from apps.udadmin.utils.model_register import mr
 
     if getattr(settings, "SYNC_REGISTERED_MODEL_PERMISSIONS", False):

@@ -231,8 +231,8 @@ docker compose up -d --build backend
 ### 完整容器流程
 
 ```bash
-docker compose run --rm frontend-build
-docker compose up -d --build backend
+docker compose stop backend
+docker compose --profile build --profile init up --build
 ```
 
 如果需要查看日志：

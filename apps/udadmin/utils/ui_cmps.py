@@ -37,7 +37,7 @@ form_map = {
     "LargeBinary": "CharField",
     "Numeric": "DecimalField",
     "SmallInteger": "IntField",
-    "String": "SelectField",
+    "String": "InputField",
     "Text": "TextField",
     "Time": "TimeField",
     "BackwardFKRelation": "RelationField",

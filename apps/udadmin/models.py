@@ -95,7 +95,7 @@ class User(DtBase):
         String(255), nullable=False, info=FieldInfo(ui_name="密码", ui_order=3)
     )
     gender = Column(
-        String(50), default="男", info=FieldInfo(ui_name="性别", ui_order=4)
+        String(50), default="男", info=FieldInfo(ui_name="性别", ui_order=4, choices=["男", "女", "未知"])
     )
     cn_name = Column(
         String(255), nullable=True, info=FieldInfo(ui_name="中文名", ui_order=5)

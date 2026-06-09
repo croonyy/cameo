@@ -29,6 +29,9 @@ export function setupNaiveDiscreteApi() {
     ['message', 'dialog', 'notification', 'loadingBar'],
     {
       configProviderProps: configProviderPropsRef,
+      messageProviderProps: {
+        keepAliveOnHover: true,
+      },
     }
   );
 

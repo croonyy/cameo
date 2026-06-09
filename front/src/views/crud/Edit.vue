@@ -592,14 +592,18 @@
         continue;
       }
       const formComponentName = getFormComponentName(field);
-      if (formComponentName && formComponentName in FormItemFieldComponentMap) {
+      const resolvedFormComponentName =
+        formComponentName && formComponentName in FormItemFieldComponentMap
+          ? formComponentName
+          : 'InputField';
+      if (resolvedFormComponentName in FormItemFieldComponentMap) {
         try {
           let result: any = null;
           const relation_search = ui.relation_search[field.field_name] ||
             ui.relation_search[field.source_field] || ['id'];
           const types_group1 = ['ForeignKeyField', 'ManyToManyField', 'BackwardFKRelation'];
           if (types_group1.includes(field.field_type)) {
-            result = FormItemFieldComponentMap[formComponentName](
+            result = FormItemFieldComponentMap[resolvedFormComponentName](
               field,
               id,
               relation_search,
@@ -607,9 +611,13 @@
             );
           } else if (FkField.includes(field.field_type)) {
             console.log('formData', formData.value);
-            result = FormItemFieldComponentMap[formComponentName](field, id, relation_search);
+            result = FormItemFieldComponentMap[resolvedFormComponentName](
+              field,
+              id,
+              relation_search
+            );
           } else {
-            result = FormItemFieldComponentMap[formComponentName](field);
+            result = FormItemFieldComponentMap[resolvedFormComponentName](field);
           }
           // 等待包含下拉框的组件的异步Promise完成或直接使用结果
           // const item = await (result instanceof Promise ? result : Promise.resolve(result));
@@ -618,8 +626,6 @@
         } catch (error) {
           console.error(`生成表单项配置时处理字段 ${field.field_name} 时出错`, error);
         }
-      } else {
-        console.log(`数据库类型 ${field.field_type} 不支持form组件化。`);
       }
     }
     return items; // 直接返回对象列表，不是Promise

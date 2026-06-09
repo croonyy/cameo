@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from pathlib import Path
 from typing import Any, AsyncGenerator
 
 import pytz
 from dateutil import parser
 from sqlalchemy import Date, DateTime
+from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
@@ -75,6 +77,15 @@ def _sqlite_engine_options(url: str) -> dict[str, Any]:
     if url.startswith("sqlite") and "check_same_thread" not in url:
         return {"connect_args": {"check_same_thread": False}}
     return {}
+
+
+def _ensure_sqlite_parent_dir(url: str) -> None:
+    parsed_url = make_url(url)
+    if parsed_url.get_backend_name() != "sqlite" or not parsed_url.database:
+        return
+    if parsed_url.database == ":memory:":
+        return
+    Path(parsed_url.database).parent.mkdir(parents=True, exist_ok=True)
 
 
 @lru_cache
@@ -169,6 +180,7 @@ def get_db_dependency(database: str | None = None):
 
 async def init_db(database: str | None = None):
     database_name = normalize_database_name(database)
+    _ensure_sqlite_parent_dir(get_database_config(database_name)["url"])
     async with get_engine(database_name).begin() as conn:
         await conn.run_sync(get_base(database_name).metadata.create_all)
 

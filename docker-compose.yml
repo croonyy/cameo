@@ -21,10 +21,28 @@ services:
       pnpm install --frozen-lockfile --store-dir /pnpm/store &&
       pnpm build"
 
+  init-data:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    profiles:
+      - init
+    volumes:
+      - ./:/app
+    command: python init_data.py
+
   backend:
     build:
       context: .
       dockerfile: Dockerfile
+    depends_on:
+      frontend-build:
+        condition: service_completed_successfully
+        required: false
+      init-data:
+        condition: service_completed_successfully
+        required: false
     ports:
       - "3014:3014"
     volumes:

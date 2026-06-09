@@ -142,19 +142,14 @@
   import { FilterFieldComponentMap } from './cmpsFilter';
   import { GenerateFilter } from './filterData';
   import { SearchFieldComponent } from './cmpsSearch';
+  import { columnRenderMap, getFieldAlign } from './columnRender';
   import {
-    columnRenderMap,
-    formatListDisplayValue,
-    getFieldAlign,
-    translateKnownDataText,
-  } from './columnRender';
-  import {
-    buildChoiceOptions,
-    formatChoiceValue,
-    getTextWidth,
-    hasChoices,
-    normalizeChoiceValue,
-  } from './tools';
+    getInlineComponentName,
+    getInlineDisplayText,
+    getInlineJsonDisplayText,
+    InlineFieldComponentMap,
+  } from './cmpsInline';
+  import { formatChoiceValue, getTextWidth, hasChoices, normalizeChoiceValue } from './tools';
   import { CRUD_LIST, CRUD_EDIT, CRUD_CREATE } from '@/store/consts';
   import { useCrudRefresh } from '@/store/modules/crudListRefresh';
   import { UserInfoType, useUserStore } from '@/store/modules/user';
@@ -162,31 +157,12 @@
   import { storage } from '@/utils/Storage';
   import { t } from '@/i18n';
   import componentSetting from '@/settings/componentSetting';
-  import {
-    BOOLEAN_LIKE_FIELD_TYPES,
-    DATE_LIKE_FIELD_TYPES,
-    DATETIME_LIKE_FIELD_TYPES,
-    JSON_LIKE_FIELD_TYPES,
-    MANY_RELATION_FIELD_TYPES,
-    NUMBER_LIKE_FIELD_TYPES,
-    SINGLE_RELATION_FIELD_TYPES,
-    TEXT_LIKE_FIELD_TYPES,
-    TIME_LIKE_FIELD_TYPES,
-  } from './types';
+  import { MANY_RELATION_FIELD_TYPES, SINGLE_RELATION_FIELD_TYPES } from './types';
 
   const userStore = useUserStore();
   const userInfo: UserInfoType = userStore.getUserInfo || {};
 
-  import {
-    useMessage,
-    NIcon,
-    NCheckbox,
-    NSelect,
-    NDatePicker,
-    NTimePicker,
-    NInputNumber,
-    NInput,
-  } from 'naive-ui';
+  import { useMessage, NIcon } from 'naive-ui';
 
   const message = useMessage();
   const currentRoute = useRoute();
@@ -420,6 +396,11 @@
         emit('change', props.rowId, props.fieldName, val);
       }
 
+      function emitRawChange(val: any) {
+        hasChanged.value = true;
+        emit('change', props.rowId, props.fieldName, val);
+      }
+
       onMounted(() => document.addEventListener('mousedown', onDocMouseDown, true));
       onUnmounted(() => document.removeEventListener('mousedown', onDocMouseDown, true));
 
@@ -460,13 +441,11 @@
         'cursor:pointer;border-bottom:1px dashed #999;padding:0 1px;min-width:0;min-height:20px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle;line-height:1.4;';
 
       function getDisplayText(value: any) {
-        return formatListDisplayValue(value);
+        return getInlineDisplayText(value);
       }
 
       function getJsonDisplayText(value: any) {
-        return value === null || value === undefined
-          ? formatListDisplayValue(value)
-          : JSON.stringify(translateKnownDataText(value));
+        return getInlineJsonDisplayText(value);
       }
 
       function renderFullWidthEditor(editor: any) {
@@ -542,252 +521,28 @@
         return `${timeMatch[1]}:${timeMatch[2] ?? '00'}`;
       }
 
-      // ---- Boolean: direct checkbox toggle ----
-      if (BOOLEAN_LIKE_FIELD_TYPES.has(props.fieldType)) {
-        const currentValue = computed(() => !!(editValue.value ?? props.value));
-        return () => {
-          if (!props.canEdit) {
-            return renderAlignedContent(
-              h(
-                'span',
-                {},
-                props.value === null || props.value === undefined
-                  ? getDisplayText(props.value)
-                  : props.value
-                  ? t('common.yes')
-                  : t('common.no')
-              )
-            );
-          }
-          return renderAlignedContent(
-            h(NCheckbox, {
-              checked: currentValue.value,
-              onUpdateChecked: (val: boolean) => emitChange(val),
-              style: 'transform: scale(0.85);',
-            })
-          );
-        };
-      }
-
-      // ---- Enum types: direct select dropdown ----
-      if (hasChoices(props.choices)) {
-        const selectOptions = buildChoiceOptions(props.choices);
-        return () => {
-          const currentValue = normalizeChoiceValue(editValue.value ?? props.value, props.choices);
-          if (!props.canEdit) {
-            return renderAlignedContent(
-              h('span', {}, formatChoiceValue(currentValue, props.choices))
-            );
-          }
-          return renderAlignedContent(
-            h(NSelect, {
-              value: currentValue,
-              options: selectOptions,
-              size: 'tiny',
-              style: `${getAlignedControlStyle('70%')}min-width:80px;max-width:300px;`,
-              consistentMenuWidth: false,
-              onUpdateValue: (val: any) => emitChange(val),
-            })
-          );
-        };
-      }
-
-      // ---- Date/DateTime: date picker ----
-      if (
-        DATE_LIKE_FIELD_TYPES.has(props.fieldType) ||
-        DATETIME_LIKE_FIELD_TYPES.has(props.fieldType)
-      ) {
-        const isDateTime = DATETIME_LIKE_FIELD_TYPES.has(props.fieldType);
-        const valueFormat = isDateTime ? 'yyyy-MM-dd HH:mm:ss' : 'yyyy-MM-dd';
-        return () => {
-          if (!props.canEdit) {
-            return renderAlignedContent(
-              h('span', {}, getDisplayText(formatDateDisplayValue(props.value, isDateTime)))
-            );
-          }
-          // In editing mode, show date picker
-          if (isEditing.value) {
-            return h(NDatePicker, {
-              ref: inputEl,
-              formattedValue: normalizeDatePickerValue(editValue.value ?? props.value, isDateTime),
-              valueFormat,
-              type: isDateTime ? 'datetime' : 'date',
-              format: valueFormat,
-              size: 'small',
-              style: getAlignedControlStyle('100%'),
-              onUpdateFormattedValue: (val: string | null) => emitChange(val),
-            });
-          }
-          // Display mode: double-click to edit
-          const displayVal = getDisplayText(formatDateDisplayValue(props.value, isDateTime));
-          return h(
-            'span',
-            {
-              style: `${displayTextStyle}text-align:${props.align};`,
-              onDblclick: startEdit,
-            },
-            displayVal
-          );
-        };
-      }
-
-      // ---- Time: time picker ----
-      if (TIME_LIKE_FIELD_TYPES.has(props.fieldType)) {
-        return () => {
-          if (!props.canEdit) {
-            return renderAlignedContent(h('span', {}, getDisplayText(props.value)));
-          }
-          if (isEditing.value) {
-            return h(NTimePicker, {
-              ref: inputEl,
-              formattedValue: normalizeTimePickerValue(editValue.value ?? props.value),
-              valueFormat: 'HH:mm:ss',
-              format: 'HH:mm:ss',
-              size: 'small',
-              style: getAlignedControlStyle('100%'),
-              onUpdateFormattedValue: (val: string | null) => emitChange(val),
-            });
-          }
-          const displayVal = getDisplayText(props.value);
-          return h(
-            'span',
-            {
-              style: `${displayTextStyle}text-align:${props.align};`,
-              onDblclick: startEdit,
-            },
-            displayVal
-          );
-        };
-      }
-
-      // ---- Number types: input number ----
-      if (NUMBER_LIKE_FIELD_TYPES.has(props.fieldType)) {
-        return () => {
-          if (!props.canEdit) {
-            return h('span', {}, getDisplayText(props.value));
-          }
-          if (isEditing.value) {
-            return h(NInputNumber, {
-              ref: inputEl,
-              value: editValue.value ?? props.value,
-              size: 'tiny',
-              style: getAlignedControlStyle('100%'),
-              showButton: false,
-              onUpdateValue: (val: number | null) => emitChange(val),
-            });
-          }
-          const displayVal = getDisplayText(props.value);
-          return h(
-            'span',
-            {
-              style: `${displayTextStyle}text-align:${props.align};`,
-              onDblclick: startEdit,
-            },
-            displayVal
-          );
-        };
-      }
-
-      // ---- JSON types: textarea ----
-      if (JSON_LIKE_FIELD_TYPES.has(props.fieldType)) {
-        return () => {
-          if (!props.canEdit) {
-            return h('span', {}, getJsonDisplayText(props.value));
-          }
-          if (isEditing.value) {
-            return renderFullWidthEditor(
-              h(NInput, {
-                ref: inputEl,
-                value:
-                  editValue.value != null
-                    ? typeof editValue.value === 'object'
-                      ? JSON.stringify(editValue.value, null, 2)
-                      : String(editValue.value)
-                    : '',
-                type: 'textarea',
-                size: 'tiny',
-                rows: 2,
-                class: 'inline-textarea-editor',
-                style: fullWidthTextareaStyle,
-                onUpdateValue: (val: string) => {
-                  editValue.value = val;
-                  // Try to parse as JSON
-                  try {
-                    const parsed = JSON.parse(val);
-                    emit('change', props.rowId, props.fieldName, parsed);
-                  } catch {
-                    // Keep as string if not valid JSON
-                    emit('change', props.rowId, props.fieldName, val);
-                  }
-                },
-              })
-            );
-          }
-          const displayVal = getJsonDisplayText(props.value);
-          return h(
-            'span',
-            {
-              style: `${displayTextStyle}font-size:12px;`,
-              onDblclick: startEdit,
-            },
-            displayVal
-          );
-        };
-      }
-
-      // ---- Text types: textarea ----
-      if (TEXT_LIKE_FIELD_TYPES.has(props.fieldType)) {
-        return () => {
-          if (!props.canEdit) {
-            return h('span', {}, getDisplayText(props.value));
-          }
-          if (isEditing.value) {
-            return renderFullWidthEditor(
-              h(NInput, {
-                ref: inputEl,
-                value: editValue.value ?? props.value ?? '',
-                type: 'textarea',
-                size: 'tiny',
-                rows: 2,
-                class: 'inline-textarea-editor',
-                style: fullWidthTextareaStyle,
-                onUpdateValue: (val: string) => emitChange(val),
-              })
-            );
-          }
-          const displayVal = getDisplayText(props.value);
-          return h(
-            'span',
-            {
-              style: displayTextStyle,
-              onDblclick: startEdit,
-            },
-            displayVal
-          );
-        };
-      }
-
-      // ---- Default: string input, double-click to edit ----
-      return () => {
-        if (isEditing.value && props.canEdit) {
-          return h(NInput, {
-            ref: inputEl,
-            value: editValue.value ?? props.value ?? '',
-            size: 'tiny',
-            style: 'width:100%;',
-            onUpdateValue: (val: string) => emitChange(val),
-          });
-        }
-        const displayVal = getDisplayText(props.value);
-        return h(
-          'span',
-          {
-            style: props.canEdit ? `${displayTextStyle}text-align:${props.align};` : '',
-            onDblclick: startEdit,
-          },
-          displayVal
-        );
-      };
+      const inlineComponentName = getInlineComponentName(props.fieldType, props.choices);
+      const inlineComponent =
+        InlineFieldComponentMap[inlineComponentName] || InlineFieldComponentMap.InputField;
+      return inlineComponent({
+        props,
+        isEditing,
+        editValue,
+        inputEl,
+        startEdit,
+        emitChange,
+        emitRawChange,
+        renderAlignedContent,
+        renderFullWidthEditor,
+        getAlignedControlStyle,
+        displayTextStyle,
+        fullWidthTextareaStyle,
+        getDisplayText,
+        getJsonDisplayText,
+        formatDateDisplayValue,
+        normalizeDatePickerValue,
+        normalizeTimePickerValue,
+      });
     },
   });
   // 查询表单，getFieldsValue作用是获取表单的值
@@ -1535,12 +1290,10 @@
       positiveText: t('common.confirm'),
       negativeText: t('common.cancel'),
       autoFocus: false,
-      positiveButtonProps: {
-        autofocus: true,
-        udFocus: true,
-      },
       onAfterEnter: () => {
-        const btn = document.querySelector('button[udfocus="true"]') as HTMLElement;
+        const btn = document.querySelector(
+          '.n-dialog__action button:last-child'
+        ) as HTMLElement | null;
         if (btn) {
           btn.focus();
         }
@@ -1747,16 +1500,10 @@
         positiveText: t('common.confirm'),
         negativeText: t('common.cancel'),
         autoFocus: false,
-        positiveButtonProps: {
-          autofocus: true,
-          udFocus: true,
-          // type: 'primary',
-          onclick: (e) => {
-            console.log(e);
-          },
-        },
         onAfterEnter: () => {
-          const btn = document.querySelector('button[udfocus="true"]') as HTMLElement;
+          const btn = document.querySelector(
+            '.n-dialog__action button:last-child'
+          ) as HTMLElement | null;
           if (btn) {
             btn.focus();
           }
@@ -2125,6 +1872,21 @@
       min-width: 0;
       max-width: 100%;
       box-sizing: border-box;
+    }
+
+    :deep(.inline-edit-cell .n-input),
+    :deep(.inline-edit-cell .n-input-number),
+    :deep(.inline-edit-cell .n-base-selection) {
+      min-height: 30px;
+    }
+
+    :deep(.inline-edit-cell .n-input-wrapper),
+    :deep(.inline-edit-cell .n-input__input),
+    :deep(.inline-edit-cell .n-input__input-el),
+    :deep(.inline-edit-cell .n-base-selection-label),
+    :deep(.inline-edit-cell .n-base-selection-input) {
+      min-height: 28px;
+      line-height: 28px;
     }
 
     :deep(.inline-textarea-editor) {
