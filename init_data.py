@@ -12,6 +12,7 @@ from pathlib import Path
 import click
 from sqlalchemy import func, select
 
+from apps.db_external import models as external_md
 from apps.demo import models as demo_md
 from apps.demo import ui as demo_ui
 from apps.udadmin import models as md
@@ -24,10 +25,13 @@ from config.settings import BASE_DIR
 
 async_session_factory = get_session_factory()
 engine = get_engine()
+external_async_session_factory = get_session_factory("db_external")
+external_engine = get_engine("db_external")
 
 
 BASE_PATH = Path(BASE_DIR)
 DB_PATH = BASE_PATH / "db" / "db.sqlite3"
+EXTERNAL_DB_PATH = BASE_PATH / "db" / "db_external.sqlite3"
 CRUD_ACTIONS = tuple(model_perms.values())
 
 
@@ -63,29 +67,40 @@ def _run_command(args: list[str], *, check: bool = True) -> subprocess.Completed
 
 
 def reset_sqlite_database() -> None:
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     if DB_PATH.exists():
         DB_PATH.unlink()
-        print(f"✓ Deleted database: {DB_PATH}")
+        _safe_print(f"[ok] Deleted database: {DB_PATH}")
     else:
-        print(f"✓ Database does not exist, skip delete: {DB_PATH}")
+        _safe_print(f"[ok] Database does not exist, skip delete: {DB_PATH}")
+
+
+def reset_external_sqlite_database() -> None:
+    EXTERNAL_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    if EXTERNAL_DB_PATH.exists():
+        EXTERNAL_DB_PATH.unlink()
+        _safe_print(f"[ok] Deleted external database: {EXTERNAL_DB_PATH}")
+    else:
+        _safe_print(f"[ok] External database does not exist, skip delete: {EXTERNAL_DB_PATH}")
 
 
 def run_alembic_migrations() -> None:
-    print("✓ Running Alembic upgrade head")
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    _safe_print("[ok] Running Alembic upgrade head")
     _run_command(["-m", "alembic", "upgrade", "head"])
 
-    print("✓ Checking model changes for Alembic autogenerate")
+    _safe_print("[ok] Checking model changes for Alembic autogenerate")
     check_result = _run_command(["-m", "alembic", "check"], check=False)
     output = f"{check_result.stdout}\n{check_result.stderr}"
     if check_result.returncode == 0:
-        print("✓ No pending model changes; no new migration file needed")
+        _safe_print("[ok] No pending model changes; no new migration file needed")
         return
     if "New upgrade operations detected" not in output:
         raise RuntimeError("Alembic check failed for a reason other than model changes.")
 
-    print("✓ Generating Alembic migration for pending model changes")
+    _safe_print("[ok] Generating Alembic migration for pending model changes")
     _run_command(["-m", "alembic", "revision", "--autogenerate", "-m", "auto_model_sync"])
-    print("✓ Applying generated Alembic migration")
+    _safe_print("[ok] Applying generated Alembic migration")
     _run_command(["-m", "alembic", "upgrade", "head"])
 
 
@@ -246,7 +261,7 @@ async def _create_roles(session, permissions_by_name: dict[str, md.Permission], 
 
 async def _create_users(session, roles: list[md.Role], permissions_by_name: dict[str, md.Permission]):
     user_specs = [
-        ("admin", "admin", "管理员", True, [roles[0]], []),
+        ("admin", "123456", "管理员", True, [roles[0]], []),
         ("test_user", "123456", "普通只读用户", False, [roles[4]], []),
         ("all_model_user", "123456", "全部模型用户", False, [roles[1]], []),
         ("udadmin_user", "123456", "后台管理用户", False, [roles[2]], []),
@@ -445,6 +460,96 @@ async def _create_demo_data(session):
     return fk_objs, relation_objs, detail_objs
 
 
+async def create_external_database() -> dict[str, int]:
+    async with external_engine.begin() as conn:
+        await conn.run_sync(external_md.Base.metadata.create_all)
+
+    departments = [
+        external_md.Department(
+            id=1,
+            name="Research",
+            code="RD",
+            location="Shanghai",
+            is_active=True,
+            created_at=datetime(2025, 1, 10, 9, 0, 0),
+        ),
+        external_md.Department(
+            id=2,
+            name="Sales",
+            code="SALES",
+            location="Beijing",
+            is_active=True,
+            created_at=datetime(2025, 2, 12, 9, 30, 0),
+        ),
+        external_md.Department(
+            id=3,
+            name="Operations",
+            code="OPS",
+            location="Shenzhen",
+            is_active=False,
+            created_at=datetime(2025, 3, 14, 10, 0, 0),
+        ),
+    ]
+    employees = [
+        external_md.Employee(
+            id=1,
+            department_id=1,
+            name="Alice Chen",
+            email="alice.chen@example.com",
+            age=31,
+            salary=Decimal("32000.00"),
+            hired_on=date(2023, 4, 12),
+            is_active=True,
+            bio="Backend engineer for data platform integrations.",
+        ),
+        external_md.Employee(
+            id=2,
+            department_id=1,
+            name="Bob Li",
+            email="bob.li@example.com",
+            age=28,
+            salary=Decimal("28500.00"),
+            hired_on=date(2024, 1, 8),
+            is_active=True,
+            bio="Frontend engineer focused on admin UI workflows.",
+        ),
+        external_md.Employee(
+            id=3,
+            department_id=2,
+            name="Carol Wang",
+            email="carol.wang@example.com",
+            age=35,
+            salary=Decimal("36000.00"),
+            hired_on=date(2022, 8, 22),
+            is_active=True,
+            bio="Enterprise account manager.",
+        ),
+        external_md.Employee(
+            id=4,
+            department_id=3,
+            name="David Zhang",
+            email="david.zhang@example.com",
+            age=40,
+            salary=Decimal("30000.00"),
+            hired_on=date(2021, 11, 5),
+            is_active=False,
+            bio="Operations coordinator for legacy systems.",
+        ),
+    ]
+
+    async with external_async_session_factory() as session:
+        session.add_all(departments)
+        await session.flush()
+        session.add_all(employees)
+        await session.commit()
+
+    _safe_print("[ok] External database seeded")
+    return {
+        "external_departments": len(departments),
+        "external_employees": len(employees),
+    }
+
+
 async def seed_test_data():
     random.seed(20260527)
     async with async_session_factory() as session:
@@ -455,7 +560,7 @@ async def seed_test_data():
         fk_objs, relation_objs, detail_objs = await _create_demo_data(session)
         await session.commit()
 
-    print("✓ Seed data committed")
+    _safe_print("[ok] Seed data committed")
     return {
         "models": len(models),
         "permissions": len(permissions_by_name),
@@ -489,21 +594,25 @@ async def verify_seed_data() -> dict[str, int]:
 
 async def async_main():
     reset_sqlite_database()
+    reset_external_sqlite_database()
     run_alembic_migrations()
     expected = await seed_test_data()
+    external_expected = await create_external_database()
+    expected.update(external_expected)
     counts = await verify_seed_data()
+    counts.update(external_expected)
 
     print("\n" + "=" * 80)
-    print(click.style("数据初始化完成！", bold=True, fg=(0, 255, 0)))
+    _safe_print(click.style("Data initialization completed!", bold=True, fg=(0, 255, 0)))
     print("=" * 80)
-    print("登录账号:")
-    print("  admin/admin")
+    print("Login accounts:")
+    print("  admin/123456")
     print("  test_user/123456")
     print("  empty_user/123456")
-    print("写入统计:")
+    print("Written counts:")
     for key, value in counts.items():
         print(f"  {key}: {value}")
-    print("预期核心数据:")
+    print("Expected seed data:")
     for key, value in expected.items():
         print(f"  {key}: {value}")
     print("=" * 80)
@@ -513,10 +622,11 @@ def main():
     try:
         asyncio.run(async_main())
     except Exception as exc:
-        print(traceback.format_exc())
+        _safe_print(traceback.format_exc())
         raise exc
     finally:
         asyncio.run(engine.dispose())
+        asyncio.run(external_engine.dispose())
 
 
 if __name__ == "__main__":
