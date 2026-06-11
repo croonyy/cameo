@@ -30,6 +30,14 @@ Core capabilities:
 - GitHub: https://github.com/croonyy/cameo
 - Gitee: https://gitee.com/croonyy/cameo
 
+## Community Chat
+
+Join the QQ group to discuss usage questions, feature suggestions, and customization experience.
+
+<p>
+  <img src="static/qq_group.png" alt="Cameo QQ group" width="260">
+</p>
+
 ## Screenshots
 
 ### Login

@@ -30,6 +30,14 @@ Cameo 是一个前后端分离的后台管理系统框架。后端使用 FastAPI
 - GitHub: https://github.com/croonyy/cameo
 - Gitee: https://gitee.com/croonyy/cameo
 
+## 交流群
+
+欢迎加入 QQ 群交流使用问题、功能建议和二次开发经验。
+
+<p>
+  <img src="static/qq_group.png" alt="Cameo QQ 交流群" width="260">
+</p>
+
 ## 效果展示
 
 ### 登录页
