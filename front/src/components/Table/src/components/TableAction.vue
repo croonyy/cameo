@@ -144,9 +144,9 @@
 
 <style lang="less" scoped>
   .tableAction {
-    display: flex;
+    display: inline-flex;
     justify-content: center;
-    width: 100%;
+    width: max-content;
     max-width: 100%;
     white-space: normal;
 
@@ -156,7 +156,7 @@
       align-items: center;
       justify-content: center;
       gap: 4px;
-      width: 100%;
+      width: max-content;
       max-width: 100%;
       min-width: 0;
       padding: 2px 0;

@@ -1,6 +1,11 @@
 <template>
   <div ref="listRootRef" class="crud-list-wrapper" @scroll.capture="handleListScroll">
-    <n-card v-if="conditionCardVisible" :bordered="false" class="condition-card">
+    <n-card
+      v-if="conditionCardVisible"
+      ref="conditionCardRef"
+      :bordered="false"
+      class="condition-card"
+    >
       <BasicForm @register="register" @submit="handleSubmit" @reset="handleReset">
         <template #statusSlot="{ model, field }">
           <n-input v-model:value="model[field]" />
@@ -178,6 +183,7 @@
   // const perms = modelInfo.value?.perms || [];
   const columns = ref<any[]>([]);
   const listRootRef = ref<HTMLElement | null>(null);
+  const conditionCardRef = ref<any>(null);
   const rowSelectionEnabled = ref(false);
   const selectedRowKeys = ref<Array<string | number>>([]);
   const selectedRowMap = ref<Record<string, Recordable>>({});
@@ -187,6 +193,8 @@
   const g_sorter = ref<any>(null);
   const tableData = ref<any[]>([]);
   const notifyNoDataAfterSearch = ref(false);
+  let conditionResizeObserver: ResizeObserver | null = null;
+  let conditionResizeRaf = 0;
 
   type ListScrollType = 'table-y' | 'table-x' | 'list';
 
@@ -212,15 +220,57 @@
     });
     sessionStorage.removeItem(`crud:${tabAppName}:${tabModelName}:table:scroll`);
   }
+
+  function getConditionCardElement() {
+    const card = conditionCardRef.value;
+    return (card?.$el || card) as HTMLElement | null;
+  }
+
+  function scheduleTableHeightSync() {
+    if (conditionResizeRaf) {
+      window.cancelAnimationFrame(conditionResizeRaf);
+    }
+    conditionResizeRaf = window.requestAnimationFrame(async () => {
+      conditionResizeRaf = 0;
+      await nextTick();
+      await actionRef.value?.syncTableLayout?.();
+      actionRef.value?.scheduleTableLayoutSync?.();
+    });
+  }
+
+  async function bindConditionResizeObserver() {
+    conditionResizeObserver?.disconnect();
+    conditionResizeObserver = null;
+    await nextTick();
+    const conditionEl = getConditionCardElement();
+    if (!conditionEl || typeof ResizeObserver === 'undefined') {
+      scheduleTableHeightSync();
+      return;
+    }
+    conditionResizeObserver = new ResizeObserver(() => {
+      scheduleTableHeightSync();
+    });
+    conditionResizeObserver.observe(conditionEl);
+    scheduleTableHeightSync();
+  }
+
+  function clearConditionResizeObserver() {
+    conditionResizeObserver?.disconnect();
+    conditionResizeObserver = null;
+    if (conditionResizeRaf) {
+      window.cancelAnimationFrame(conditionResizeRaf);
+      conditionResizeRaf = 0;
+    }
+  }
   const ACTION_BUTTON_WIDTH = 52;
   const ACTION_BUTTON_GAP = 4;
-  const ACTION_CELL_PADDING = 32;
+  const ACTION_CELL_PADDING = 12;
   const ACTION_COLUMN_TITLE_WIDTH = 76;
   const ACTION_COLUMN_MIN_WIDTH = 100;
-  const ACTION_COLUMN_MAX_WIDTH = 200;
+  const ACTION_COLUMN_MAX_WIDTH = 400;
 
   function getActionButtonWidth(label: string) {
-    return Math.max(ACTION_BUTTON_WIDTH, getTextWidth(label) + 24);
+    return Math.max(ACTION_BUTTON_WIDTH, getTextWidth(label) + 16);
   }
 
   function getActionButtonsWidth(labels: string[]) {
@@ -244,9 +294,9 @@
       ? [t('button.save'), ...normalActionLabels]
       : normalActionLabels;
     const buttonsWidth = getActionButtonsWidth(rowActionLabels);
-    const idealWidth = Math.max(ACTION_COLUMN_TITLE_WIDTH, buttonsWidth, ACTION_COLUMN_MIN_WIDTH);
+    const idealWidth = Math.max(ACTION_COLUMN_TITLE_WIDTH, buttonsWidth);
 
-    return Math.min(idealWidth, ACTION_COLUMN_MAX_WIDTH);
+    return Math.min(Math.max(idealWidth, ACTION_COLUMN_MIN_WIDTH), ACTION_COLUMN_MAX_WIDTH);
   });
 
   const paginationStorageKey = `crud_list_pagination_${currentRoute.params.app_name}_${currentRoute.params.model_name}`;
@@ -315,6 +365,19 @@
     if (!modelInfo.value?.ui) return false;
     return modelInfo.value.ui.search_fields.length > 0 || modelInfo.value.ui.list_filter.length > 0;
   });
+
+  watch(
+    conditionCardVisible,
+    (visible) => {
+      if (visible) {
+        bindConditionResizeObserver();
+      } else {
+        clearConditionResizeObserver();
+        scheduleTableHeightSync();
+      }
+    },
+    { flush: 'post' }
+  );
   const pk = ref<string>('');
   const editableFields = ref<string[]>([]);
   // Track inline edits: { rowId: { fieldName: newValue } }
@@ -1139,6 +1202,7 @@
       key: 'action',
       fixed: 'right',
       align: 'center',
+      className: 'crud-action-column',
       render(record) {
         const actions: any[] = [];
         // Inline save button (shown when there are unsaved edits)
@@ -1650,6 +1714,7 @@
 
     // After table is initialized, sync pagination state from table
     await nextTick();
+    await bindConditionResizeObserver();
     syncPaginationFromTable();
     await bindTableScrollListeners();
     restoreTableScrollPosition();
@@ -1665,6 +1730,7 @@
     if (isFirstActivation.value) {
       // First activation: just reset the flag, let onMounted handle initialization
       isFirstActivation.value = false;
+      bindConditionResizeObserver();
       bindTableScrollListeners();
       restoreTableScrollPosition();
       return;
@@ -1673,12 +1739,14 @@
     if (crudRefresh.getRefreshFlag(appName.value, modelName.value)) {
       crudRefresh.clearRefreshFlag(appName.value, modelName.value);
       nextTick(async () => {
+        await bindConditionResizeObserver();
         await reloadTable();
         await bindTableScrollListeners();
       });
       return;
     }
 
+    bindConditionResizeObserver();
     bindTableScrollListeners();
     restoreTableScrollPosition();
   });
@@ -1687,6 +1755,7 @@
   onDeactivated(() => {
     // Save current pagination state to store
     saveTableScrollPosition(true);
+    clearConditionResizeObserver();
     removeTableScrollListeners?.();
     persistPaginationState();
   });
@@ -1696,6 +1765,7 @@
   });
 
   onUnmounted(() => {
+    clearConditionResizeObserver();
     removeTableScrollListeners?.();
     window.removeEventListener('tabs-card:before-switch', handleTabsCardBeforeSwitch);
     window.removeEventListener('tabs-card:closed', handleTabsCardClosed);
@@ -1821,6 +1891,11 @@
     :deep(.n-data-table) {
       flex: 1;
       min-height: 0;
+    }
+
+    :deep(.crud-action-column) {
+      padding-right: 6px !important;
+      padding-left: 6px !important;
     }
 
     :deep(.n-data-table-base-table-body::-webkit-scrollbar) {

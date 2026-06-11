@@ -836,6 +836,15 @@
           .active-item {
             color: #ffffff;
             background-color: color-mix(in srgb, v-bind(getAppTheme) 100%, transparent);
+
+            .n-icon {
+              color: rgba(255, 255, 255, 0.82);
+
+              &:hover {
+                color: #ffffff;
+              }
+            }
+
             &:hover {
               color: #ffffff;
               background-color: color-mix(in srgb, v-bind(getAppTheme) 100%, transparent);

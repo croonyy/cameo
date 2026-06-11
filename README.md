@@ -1,5 +1,7 @@
 # Cameo
 
+🌐 Language Switch: [English](README_EN.md)
+
 <p align="center">
   <a href="#"><img src="./static/logo1.svg" alt="Cameo" width="200"></a>
 </p>
@@ -10,7 +12,7 @@
 
 ## 简介
 
-Cameo 是一个前后端分离的后台管理系统框架。后端使用 FastAPI 和 SQLAlchemy 2.0，前端使用 Vue 3、Vite、Naive UI 和 pnpm。项目内置 `udadmin` 管理应用，并提供 `demo` 示例应用，用于展示模型注册、自动 CRUD、权限控制、字段类型、关系字段和自定义动作。
+Cameo 是一个前后端分离的后台管理系统框架。后端使用 FastAPI 和 SQLAlchemy 2.0，前端使用 Vue 3、Vite、Naive UI 和 pnpm。项目内置 `udadmin` 管理应用、`demo` 示例应用和 `db_external` 外部数据库示例应用，用于展示模型注册、自动 CRUD、权限控制、多数据库、字段类型、关系字段和自定义动作。
 
 核心能力：
 
@@ -19,7 +21,9 @@ Cameo 是一个前后端分离的后台管理系统框架。后端使用 FastAPI
 - 模型 UI 配置：通过 `UiInfo`、`FieldInfo` 配置列表列、筛选项、搜索项、可编辑字段和自定义动作。
 - 国际化：后端 `locales/zh.yml`、`locales/en.yml` 和前端 `front/src/i18n` 协同提供中英文显示。
 - Demo App：覆盖外键、一对一、多对多、枚举、JSON、日期、布尔、数字、文本等常见模型场景。
-- Docker Compose：支持容器内前端打包，并用 Python slim 镜像启动后端服务。
+- 外部数据库：内置 `db_external` 示例，展示把独立数据库中的现有表接入后台管理。
+- 表格能力：支持分页、排序、筛选、横向滚动、列宽拖拽、行内编辑、批量选择、固定操作列和自定义行/工具栏动作。
+- Docker Compose：支持容器内前端打包、初始化测试数据，并用 Python slim 镜像启动后端服务。
 
 ## 项目地址
 
@@ -30,7 +34,7 @@ Cameo 是一个前后端分离的后台管理系统框架。后端使用 FastAPI
 
 ### 登录页
 
-深色科技风登录界面，默认演示账号为 `admin/admin`，适合后台管理系统的入口场景。
+深色科技风登录界面，默认演示账号为 `admin/123456`，适合后台管理系统的入口场景。
 
 ![登录页](static/images/login.png)
 
@@ -97,6 +101,7 @@ Cameo 是一个前后端分离的后台管理系统框架。后端使用 FastAPI
 
 - `/udadmin`：后台管理应用，包含用户、角色、权限、配置、操作记录等管理模型。
 - `/demo`：示例应用，展示自动 CRUD 和复杂字段/关系。
+- `/db_external`：外部数据库示例应用，展示独立数据库表的 CRUD 管理。
 - `/static`：静态资源目录，前端生产构建产物位于 `static/admin`。
 - `/admin`：后台前端入口，生产构建后由后端直接返回 `static/admin/index.html`。
 
@@ -107,14 +112,15 @@ from apps.udadmin.utils.app_registry import AppReg
 
 REGISTERED_APPS = [
     AppReg("apps.udadmin.app:app", app_icon="antd:UserOutlined"),
-    AppReg(app_path="apps.demo.app:app"),
+    AppReg("apps.demo.app:app"),
+    AppReg("apps.db_external.app:app", app_icon="antd:DatabaseOutlined"),
 ]
 ```
 
 `AppReg` 支持四个参数：
 
 - `app_path`：FastAPI app 导入路径，必填，例如 `AppReg("apps.udadmin.app:app")` 或 `AppReg(app_path="apps.demo.app:app")`。
-- `router_prefix`：挂载路径，默认 `/<app 目录名>`，例如 `/udadmin`、`/demo`。
+- `router_prefix`：挂载路径，默认 `/<app 目录名>`，例如 `/udadmin`、`/demo`、`/db_external`。
 - `app_name`：应用名称，默认 app 目录名。
 - `app_icon`：前端应用图标，默认 `antd:AppstoreOutlined`。
 
@@ -141,6 +147,17 @@ REGISTERED_APPS = [
 - `/demo/actions/detail/show_context`
 - `/demo/actions/detail/show_records`
 
+## 外部数据库示例
+
+`apps/db_external` 是仓库内置的外部数据库示例应用，默认注册到 `/db_external`。它使用 `DATABASES["db_external"]` 连接 `db/db_external.sqlite3`，并通过 `get_base(database="db_external", app_name="db_external")` 把模型绑定到独立数据库和独立 app。
+
+当前示例模型：
+
+- `Department`：外部部门表，包含部门名称、编码、办公地点、启用状态和创建时间。
+- `Employee`：外部员工表，包含所属部门、姓名、邮箱、年龄、薪资、入职日期、在职状态和简介。
+
+`init_data.py` 会重建并写入这份示例外部数据库。实际接入已有业务库时，不要对外部数据库执行 Alembic 迁移；数据库结构变化后，应同步更新对应的 SQLAlchemy 模型。
+
 ## 本地开发
 
 ### 环境要求
@@ -158,12 +175,19 @@ python init_data.py
 ```
 
 `init_data.py` 会重建默认 SQLite 数据库并写入测试数据，包括用户、角色、权限、配置、操作记录和 demo 数据。
+同时会重建 `db/db_external.sqlite3`，并写入外部部门、外部员工示例数据。
 
 常用账号：
 
-- `admin` / `admin`
+- `admin` / `123456`
 - `test_user` / `123456`
+- `all_model_user` / `123456`
+- `udadmin_user` / `123456`
 - `demo_user` / `123456`
+- `editor_user` / `123456`
+- `delete_user` / `123456`
+- `detail_user` / `123456`
+- `direct_user` / `123456`
 - `empty_user` / `123456`
 
 ### 启动后端
@@ -178,6 +202,12 @@ python run.py
 http://localhost:3014
 ```
 
+如果需要从局域网其他机器访问，不能只监听 `localhost`，需要用 `0.0.0.0` 启动，例如：
+
+```bash
+python -m uvicorn main:app --host 0.0.0.0 --port 3014 --reload
+```
+
 ### 启动前端开发服务
 
 ```bash
@@ -188,22 +218,30 @@ pnpm install
 pnpm run dev
 ```
 
-前端开发服务端口以 Vite 配置为准。生产构建时前端会输出到 `static/admin`。
+前端开发服务端口以 Vite 配置为准。生产构建时前端会输出到 `static/admin`：
+
+```bash
+pnpm run build
+```
+
+生产环境默认由后端同源提供前端页面和 API。`front/.env.production` 中 `VITE_PUBLIC_PATH=/static/admin/`，`VITE_GLOB_API_URL` 和 `VITE_GLOB_API_URL_PREFIX` 默认留空；留空时请求会走当前页面同源地址，适合后端部署在实际服务器 IP 或域名上的场景。如果前后端分离部署，再按实际网关地址配置这两个变量。
 
 ## Docker Compose
 
-项目根目录提供 `docker-compose.yml`，包含两个服务：
+项目根目录提供 `docker-compose.yml`，包含三个服务：
 
 - `frontend-build`：使用 `node:22-alpine` 安装依赖并执行前端打包。
+- `init-data`：执行 `python init_data.py`，重建主库和外部示例库并写入测试数据。
 - `backend`：使用 `python:3.12-slim` 构建并运行后端，暴露 `3014` 端口。
 
 ### 一键启动
 
 ```bash
-# 如果第一次启动需要构建前端，需要加参数 --profile build
-docker compose --profile build up
-# 如果不是第一次
-docker compose up
+# 第一次启动：构建前端、初始化数据、启动后端
+docker compose --profile build --profile init up --build
+
+# 后续普通启动
+docker compose up -d backend
 ```
 
 启动后访问：
@@ -214,25 +252,13 @@ http://localhost:3014/admin
 http://localhost:3014/docs
 http://localhost:3014/udadmin/docs
 http://localhost:3014/demo/docs
-```
-
-日常启动已构建过的后端镜像时可以使用：
-
-```bash
-docker compose up -d backend
+http://localhost:3014/db_external/docs
 ```
 
 代码或依赖变更后再重新构建：
 
 ```bash
 docker compose up -d --build backend
-```
-
-### 完整容器流程
-
-```bash
-docker compose stop backend
-docker compose --profile build --profile init up --build
 ```
 
 如果需要查看日志：
@@ -258,16 +284,21 @@ cameo/
 │  │  ├─ app.py             # udadmin FastAPI 子应用
 │  │  ├─ routers/           # 路由
 │  │  └─ utils/             # 认证、权限、国际化、模型注册等工具
-│  └─ demo/                 # 示例应用
-│     ├─ models.py          # 示例模型
-│     ├─ ui.py              # 示例模型 UI 配置
-│     ├─ app.py             # demo FastAPI 子应用
-│     └─ routers/actions.py # 自定义动作接口
+│  ├─ demo/                 # 示例应用
+│  │  ├─ models.py          # 示例模型
+│  │  ├─ ui.py              # 示例模型 UI 配置
+│  │  ├─ app.py             # demo FastAPI 子应用
+│  │  └─ routers/actions.py # 自定义动作接口
+│  └─ db_external/          # 外部数据库示例应用
+│     ├─ models.py          # 外部库表模型
+│     ├─ ui.py              # 外部库模型 UI 配置
+│     └─ app.py             # db_external FastAPI 子应用
 ├─ config/
 │  ├─ settings.py           # 默认配置
 │  └─ local_settings.py     # 本地覆盖配置，可选
 ├─ db/
-│  └─ db.sqlite3            # 默认 SQLite 数据库
+│  ├─ db.sqlite3            # 默认 SQLite 数据库
+│  └─ db_external.sqlite3   # 外部数据库示例 SQLite 数据库
 ├─ front/                   # Vue 前端工程
 ├─ locales/                 # 后端国际化资源
 ├─ static/
@@ -307,11 +338,13 @@ DetailModelUi = UiInfo(
 
 ## 管理外部数据库
 
-Cameo 可以把已经存在的数据库表接入后台管理。这个场景的方向是“数据库到模型”：数据库结构已经存在，手动或通过反射工具生成 SQLAlchemy 模型，然后注册到一个独立 app 中进行 CRUD 管理。不要对外部数据库执行 Alembic 迁移，也不要在应用启动时对外部数据库调用 `Base.metadata.create_all()` 或 `drop_all()`。
+Cameo 可以把已经存在的数据库表接入后台管理。仓库已经内置 `apps/db_external` 作为示例：`config/settings.py` 中配置了 `DATABASES["db_external"]`，并在 `REGISTERED_APPS` 中注册了 `apps.db_external.app:app`。这个场景的方向是“数据库到模型”：数据库结构已经存在，手动或通过反射工具生成 SQLAlchemy 模型，然后注册到一个独立 app 中进行 CRUD 管理。
+
+外部库不参与主项目 Alembic 迁移。生产接入已有业务库时，不要对外部数据库执行 Alembic 迁移，也不要在应用启动时对外部数据库调用 `Base.metadata.create_all()` 或 `drop_all()`。当前 `init_data.py` 只是在演示环境中重建 `db/db_external.sqlite3` 并写入示例数据。
 
 基本步骤：
 
-1. 准备外部数据库，例如 `db/db_external.sqlite3`，其中已经存在业务表和数据。
+1. 准备外部数据库，例如内置示例 `db/db_external.sqlite3`，其中已经存在业务表和数据。
 2. 在 `config/settings.py` 的 `DATABASES` 中新增一个数据库配置项。
 3. 在 `apps/` 下新建独立 app，例如 `apps/db_external/`。
 4. 根据外部数据库表生成或手写 `apps/db_external/models.py`。
@@ -441,11 +474,7 @@ from apps.udadmin.utils.app_registry import AppReg
 REGISTERED_APPS = [
     AppReg("apps.udadmin.app:app", app_icon="antd:UserOutlined"),
     AppReg("apps.demo.app:app"),
-    AppReg(
-        app_path="apps.db_external.app:app",
-        router_prefix="db_external",
-        app_icon="antd:DatabaseOutlined",
-    ),
+    AppReg("apps.db_external.app:app", app_icon="antd:DatabaseOutlined"),
 ]
 ```
 
@@ -487,6 +516,7 @@ python -m alembic downgrade -1
 
 常用配置位于 `config/settings.py`：
 
+- `DEBUG`、`SQL_LOG`、`LOCATE_PRINT`：调试、SQL 日志和 print 定位开关。
 - `DATABASE_URL`：数据库连接地址。
 - `DATABASES`：多数据库连接注册表，默认第一项为未声明 `model.database` 时使用的数据库。
 - `REGISTERED_APPS`：子应用挂载配置。
@@ -494,8 +524,16 @@ python -m alembic downgrade -1
 - `LDAP_CONFIG`：LDAP 参数。
 - `SYNC_REGISTERED_MODEL_PERMISSIONS`：启动时同步已注册模型权限。
 - `SECRET_KEY`、`ACCESS_TOKEN_EXPIRE_SECONDS`、`REFRESH_TOKEN_EXPIRE_SECONDS`：JWT 配置。
+- `TZ`：后端时区，默认 `Asia/Shanghai`。
 
 本地私有配置可写入 `config/local_settings.py` 覆盖默认值。
+
+前端生产配置位于 `front/.env.production`：
+
+- `VITE_PUBLIC_PATH`：生产静态资源前缀，当前为 `/static/admin/`。
+- `VITE_GLOB_API_URL`：API 基础地址，留空时使用当前页面同源。
+- `VITE_GLOB_API_URL_PREFIX`：API 前缀，留空时不额外拼接前缀；同源部署时建议保持为空，避免打包进固定的 `localhost`。
+- `VITE_BUILD_COMPRESS`：构建压缩方式，可选 `gzip`、`brotli`、`none`。
 
 ## 访问入口
 
@@ -503,6 +541,7 @@ python -m alembic downgrade -1
 - 主应用文档：`http://localhost:3014/docs`
 - 管理应用文档：`http://localhost:3014/udadmin/docs`
 - Demo 应用文档：`http://localhost:3014/demo/docs`
+- 外部数据库示例文档：`http://localhost:3014/db_external/docs`
 
 ## License
 
