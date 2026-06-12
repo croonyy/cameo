@@ -7,19 +7,14 @@
   <svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
     <rect width="600" height="600" fill="#ffffff" />
     <defs>
-        <!-- 核心发光渐变 -->
         <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
             <stop offset="0%" stop-color="#00ffff" stop-opacity="0.9" />
-            <stop offset="100%" stop-color="##00ffff" stop-opacity="0" />
+            <stop offset="100%" stop-color="#00ffff" stop-opacity="0" />
         </radialGradient>
-
-        <!-- 能量波渐变 -->
         <radialGradient id="waveGlow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
             <stop offset="0%" stop-color="#00ffff" stop-opacity="0.5" />
             <stop offset="60%" stop-color="#00ffff" stop-opacity="0" />
         </radialGradient>
-
-        <!-- 路径发光滤镜 -->
         <filter id="pathBlur" x="-50%" y="-50%" width="200%" height="200%">
             <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="blur" />
             <feMerge>
@@ -43,7 +38,7 @@ M251.566 426.801 A253.602 253.602 0 0 0 505.168 173.199
             stroke-width="185"
             stroke-linecap="round"
             filter="url(#pathBlur)" 
-            >
+        >
             <animate attributeName="stroke" values="#00ffff;#ff00ff;#00ffff" dur="2s" repeatCount="indefinite" />
         </path>
         <path
@@ -65,17 +60,12 @@ M251.566 426.801 A253.602 253.602 0 0 0 505.168 173.199
 <circle cx="378.367" cy="300.0" r="25.36" />
 </g>
         <circle cx="214.5655" cy="270.066" r="20" fill="#012772">
-            <!-- 动画1：核心呼吸缩放 -->
             <animate attributeName="r" values="18.5;37;18.5" dur="1.5s" repeatCount="indefinite" />
-            <!-- 动画2：核心颜色脉冲 -->
             <animate attributeName="fill" values="#ff00ff;#00ffff;#ff00ff" dur="1.5s" repeatCount="indefinite" />
         </circle>
-
-        <!-- 动画1：核心发光 -->
         <circle cx="214.5655" cy="270.066" r="300.0" fill="url(#coreGlow)">
             <animate attributeName="r" values="18.5;37;18.5" dur="1.5s" repeatCount="indefinite" />
         </circle>
-
     </g>
 </svg>
 </p>
