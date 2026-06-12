@@ -3,7 +3,6 @@
 🌐 Language Switch: [English](README_EN.md)
 
 <p align="center">
-  <a href="#"><img src="static/logo1.svg" alt="Cameo" width="200"></a>
   <svg width="600" height="600" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
     <rect width="600" height="600" fill="#ffffff" />
     <defs>
