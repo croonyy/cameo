@@ -3,7 +3,7 @@
 🌐 Language Switch: [English](README_EN.md)
 
 <p align="center">
-  <a href="#"><img src="./static/logo1.svg" alt="Cameo" width="200"></a>
+  <a href="#"><img src="static/logo1.svg" alt="Cameo" width="200"></a>
 </p>
 
 <p align="center">
